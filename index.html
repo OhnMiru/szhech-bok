@@ -323,37 +323,154 @@
         .login-card input { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-primary); }
         .login-card input::placeholder { color: var(--text-muted); }
         
-        /* Стили для формы добавления правила */
-        .rule-form {
-            background: var(--badge-bg);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
-        }
-        .rule-form select, .rule-form input {
+        /* Кастомные селекты для правил */
+        .rule-custom-select {
+            position: relative;
             width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+        }
+        .rule-custom-select-trigger {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            padding: 12px 28px 12px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-primary);
+        }
+        .rule-custom-select-trigger:after {
+            content: '▼';
+            font-size: 10px;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        .rule-custom-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            z-index: 200;
+            display: none;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 4px;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+        .rule-custom-select-dropdown.show { display: block; }
+        .rule-select-option {
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.1s;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        .rule-select-option:hover { background: var(--badge-bg); }
+        
+        /* Множественный выбор товаров */
+        .multi-select-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
+            margin-bottom: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .multi-select-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .multi-select-item:last-child { border-bottom: none; }
+        .multi-select-item:hover { background: var(--badge-bg); }
+        .multi-select-item input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--btn-bg);
+        }
+        .multi-select-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        .selected-count {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+        
+        .rule-styled-input {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            border-radius: 30px;
             border: 1px solid var(--border-color);
             background: var(--card-bg);
             color: var(--text-primary);
             font-size: 14px;
         }
-        .rule-type-buttons {
+        
+        /* Стили для числового поля с шагом 100 */
+        .price-input-wrapper {
             display: flex;
+            align-items: center;
             gap: 8px;
             margin-bottom: 12px;
         }
+        .price-input-wrapper input {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .price-step-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 22px;
+            background: var(--badge-bg);
+            border: 1px solid var(--border-color);
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .price-step-btn:active { transform: scale(0.95); }
+        
+        .rule-type-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
         .rule-type-btn {
             flex: 1;
-            padding: 8px;
-            border-radius: 20px;
+            padding: 10px;
+            border-radius: 30px;
             border: 1px solid var(--border-color);
             background: var(--card-bg);
             cursor: pointer;
             font-size: 13px;
             color: var(--text-primary);
+            transition: all 0.2s;
         }
         .rule-type-btn.active {
             background: var(--btn-bg);
@@ -412,7 +529,7 @@
         
         <div style="display: flex; gap: 10px; margin-bottom: 12px;">
             <button class="refresh-btn" onclick="loadData(true, true)">🔄 Обновить</button>
-            <button class="refresh-btn" onclick="openRulesModal()" style="background: var(--btn-bg);">📋 Правила</button>
+            <button class="refresh-btn" id="rulesButton" style="background: var(--btn-bg);">📋 Правила</button>
             <button class="history-btn" onclick="showHistory()">📜 История</button>
         </div>
         
@@ -469,7 +586,7 @@
         </div>
     </div>
 
-    <!-- Модалка правил (новая версия) -->
+    <!-- Модалка правил -->
     <div id="rulesModal" class="modal">
         <div class="modal-content" style="max-width: 550px; margin: 20px auto;">
             <div class="modal-header">
@@ -477,29 +594,22 @@
                 <button class="close-btn" onclick="closeRulesModal()">×</button>
             </div>
             
-            <!-- Форма добавления правила -->
-            <div class="rule-form">
-                <div style="font-weight: bold; margin-bottom: 12px;">➕ Добавить новое правило</div>
-                
-                <div class="rule-type-buttons">
-                    <button class="rule-type-btn" data-type="type" onclick="selectRuleType('type')">📦 По типу</button>
-                    <button class="rule-type-btn" data-type="product" onclick="selectRuleType('product')">🏷️ По товару</button>
-                    <button class="rule-type-btn" data-type="price" onclick="selectRuleType('price')">💰 По сумме</button>
-                </div>
-                
-                <div id="ruleTypeContent">
-                    <!-- Сюда динамически подставляется форма -->
-                </div>
-                
-                <button onclick="addStructuredRule()" style="background: var(--btn-bg); color: white; width: 100%; padding: 10px; border-radius: 30px; border: none; font-size: 14px; margin-top: 10px;">➕ Добавить правило</button>
+            <div class="rule-type-buttons">
+                <button class="rule-type-btn" data-type="type" onclick="selectRuleType('type')">📦 По типу</button>
+                <button class="rule-type-btn" data-type="product" onclick="selectRuleType('product')">🏷️ По товару</button>
+                <button class="rule-type-btn" data-type="price" onclick="selectRuleType('price')">💰 По сумме</button>
             </div>
             
-            <div style="font-weight: bold; margin: 16px 0 8px 0;">📋 Список правил</div>
+            <div id="ruleTypeContent"></div>
+            
+            <button onclick="addStructuredRule()" style="background: var(--btn-bg); color: white; width: 100%; padding: 12px; border-radius: 30px; border: none; font-size: 14px; margin-top: 8px; cursor: pointer;">➕ Добавить правило</button>
+            
+            <div style="font-weight: bold; margin: 20px 0 12px 0;">📋 Список правил</div>
             <div id="rules-list" style="max-height: 300px; overflow-y: auto;">
-                <div class="loading">Загрузка правил...</div>
+                <div class="empty-cart">📭 Нет добавленных правил. Создайте новое!</div>
             </div>
             
-            <button onclick="resetDefaultRules()" style="background: var(--reset-bg); color: var(--reset-color); width: 100%; padding: 10px; border-radius: 30px; border: none; font-size: 14px; margin-top: 12px;">🔄 Сбросить к стандартным</button>
+            <button onclick="deleteAllRules()" style="background: var(--minus-bg); color: var(--minus-color); width: 100%; padding: 12px; border-radius: 30px; border: none; font-size: 14px; margin-top: 12px; cursor: pointer;">🗑 Удалить все правила</button>
         </div>
     </div>
     
@@ -528,22 +638,17 @@
         let currentSortBy = "none";
         let typeOptions = [];
         
-        // ========== НОВАЯ СИСТЕМА ПРАВИЛ ==========
-        let rulesList = []; // Каждое правило: { type, condition, message, icon }
+        // ========== ПРАВИЛА ==========
+        let rulesList = [];
         let currentRuleType = "type";
-        
-        // Стандартные правила
-        const defaultRules = [
-            { type: "type", condition: { typeName: "Открытка", minQty: 2 }, message: "🎁 Стикер в подарок!", icon: "🎁" },
-            { type: "price", condition: { minSum: 1000 }, message: "📜 Печать в бланк!", icon: "📜" }
-        ];
+        let selectedProducts = new Set();
         
         function loadRules() {
             const saved = localStorage.getItem('merch_rules_structured');
             if (saved) {
                 rulesList = JSON.parse(saved);
             } else {
-                rulesList = [...defaultRules];
+                rulesList = [];
                 saveRules();
             }
         }
@@ -554,6 +659,7 @@
         
         function selectRuleType(type) {
             currentRuleType = type;
+            selectedProducts.clear();
             document.querySelectorAll('.rule-type-btn').forEach(btn => {
                 if (btn.dataset.type === type) {
                     btn.classList.add('active');
@@ -564,35 +670,99 @@
             renderRuleForm();
         }
         
+        function openRuleSelect(selectId) {
+            const dropdown = document.getElementById(selectId + '-dropdown');
+            if (dropdown) dropdown.classList.toggle('show');
+        }
+        
+        function selectRuleOption(selectId, value, displayText) {
+            const trigger = document.getElementById(selectId + '-trigger');
+            const hiddenInput = document.getElementById(selectId);
+            if (trigger) trigger.textContent = displayText;
+            if (hiddenInput) hiddenInput.value = value;
+            const dropdown = document.getElementById(selectId + '-dropdown');
+            if (dropdown) dropdown.classList.remove('show');
+        }
+        
+        function closeAllRuleSelects() {
+            document.querySelectorAll('.rule-custom-select-dropdown').forEach(dropdown => {
+                dropdown.classList.remove('show');
+            });
+        }
+        
+        function toggleProductSelection(productName) {
+            if (selectedProducts.has(productName)) {
+                selectedProducts.delete(productName);
+            } else {
+                selectedProducts.add(productName);
+            }
+            updateSelectedProductsDisplay();
+        }
+        
+        function updateSelectedProductsDisplay() {
+            const container = document.getElementById('selectedProductsDisplay');
+            if (!container) return;
+            const count = selectedProducts.size;
+            if (count === 0) {
+                container.innerHTML = '<div class="selected-count">📦 Выбрано: 0 товаров</div>';
+            } else {
+                const names = Array.from(selectedProducts).join(', ');
+                container.innerHTML = `<div class="selected-count">📦 Выбрано: ${count} товаров (${names.length > 30 ? names.substring(0, 30) + '...' : names})</div>`;
+            }
+        }
+        
+        function changePriceValue(delta) {
+            const input = document.getElementById('rulePriceMin');
+            if (input) {
+                let val = parseInt(input.value) || 0;
+                val = Math.max(1, val + delta);
+                input.value = val;
+            }
+        }
+        
         function renderRuleForm() {
             const container = document.getElementById('ruleTypeContent');
             if (!container) return;
             
-            const types = [...new Set(originalCardsData.map(c => c.type).filter(t => t))];
-            const products = originalCardsData.map(c => ({ name: c.name, type: c.type }));
+            const types = [...new Set(originalCardsData.map(c => c.type).filter(t => t && t.trim()))];
+            const products = originalCardsData.map(c => ({ name: c.name }));
             
             if (currentRuleType === 'type') {
+                const typesHtml = types.map(t => `<div class="rule-select-option" onclick="selectRuleOption('ruleTypeSelect', '${escapeHtml(t)}', '${escapeHtml(t)}')">${escapeHtml(t)}</div>`).join('');
                 container.innerHTML = `
-                    <select id="ruleTypeSelect" style="width:100%; padding:10px; border-radius:20px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-primary); margin-bottom:10px;">
-                        <option value="">Выберите тип мерча</option>
-                        ${types.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
-                    </select>
-                    <input type="number" id="ruleTypeQty" placeholder="Количество от (шт)" min="1" style="width:100%; padding:10px; border-radius:20px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-primary);">
-                    <input type="text" id="ruleTypeMessage" placeholder="Что выводить? (например: Стикер в подарок)" style="width:100%; padding:10px; border-radius:20px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-primary);">
+                    <div class="rule-custom-select">
+                        <div class="rule-custom-select-trigger" id="ruleTypeSelect-trigger" onclick="openRuleSelect('ruleTypeSelect')">Выберите тип мерча</div>
+                        <input type="hidden" id="ruleTypeSelect" value="">
+                        <div class="rule-custom-select-dropdown" id="ruleTypeSelect-dropdown">${typesHtml || '<div class="rule-select-option">Нет доступных типов</div>'}</div>
+                    </div>
+                    <input type="number" id="ruleTypeQty" class="rule-styled-input" placeholder="Количество от (шт)" min="1">
+                    <input type="text" id="ruleTypeMessage" class="rule-styled-input" placeholder="Что выводить? (например: Стикер в подарок)">
                 `;
             } else if (currentRuleType === 'product') {
-                container.innerHTML = `
-                    <select id="ruleProductSelect" style="width:100%; padding:10px; border-radius:20px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-primary); margin-bottom:10px;">
-                        <option value="">Выберите товар</option>
-                        ${products.map(p => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('')}
-                    </select>
-                    <input type="number" id="ruleProductQty" placeholder="Количество от (шт)" min="1" style="width:100%; padding:10px; border-radius:20px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-primary);">
-                    <input type="text" id="ruleProductMessage" placeholder="Что выводить? (например: Скидка 10% на следующий раз)" style="width:100%; padding:10px; border-radius:20px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-primary);">
+                let productsHtml = '<div class="multi-select-container">';
+                products.forEach(p => {
+                    productsHtml += `
+                        <div class="multi-select-item" onclick="toggleProductSelection('${escapeHtml(p.name)}')">
+                            <input type="checkbox" ${selectedProducts.has(p.name) ? 'checked' : ''} onclick="event.stopPropagation(); toggleProductSelection('${escapeHtml(p.name)}')">
+                            <label>${escapeHtml(p.name)}</label>
+                        </div>
+                    `;
+                });
+                productsHtml += '</div><div id="selectedProductsDisplay"></div>';
+                
+                container.innerHTML = productsHtml + `
+                    <input type="number" id="ruleProductQty" class="rule-styled-input" placeholder="Количество от (шт)" min="1">
+                    <input type="text" id="ruleProductMessage" class="rule-styled-input" placeholder="Что выводить? (например: Скидка 10% на следующий раз)">
                 `;
+                updateSelectedProductsDisplay();
             } else if (currentRuleType === 'price') {
                 container.innerHTML = `
-                    <input type="number" id="rulePriceMin" placeholder="Минимальная сумма (₽)" min="1" style="width:100%; padding:10px; border-radius:20px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-primary);">
-                    <input type="text" id="rulePriceMessage" placeholder="Что выводить? (например: Печать в бланк)" style="width:100%; padding:10px; border-radius:20px; border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-primary);">
+                    <div class="price-input-wrapper">
+                        <input type="number" id="rulePriceMin" class="rule-styled-input" placeholder="Минимальная сумма (₽)" min="1" step="100" value="1000">
+                        <button class="price-step-btn" onclick="changePriceValue(-100)">−100</button>
+                        <button class="price-step-btn" onclick="changePriceValue(100)">+100</button>
+                    </div>
+                    <input type="text" id="rulePriceMessage" class="rule-styled-input" placeholder="Что выводить? (например: Печать в бланк)">
                 `;
             }
         }
@@ -604,28 +774,23 @@
                 const typeName = document.getElementById('ruleTypeSelect')?.value;
                 const minQty = parseInt(document.getElementById('ruleTypeQty')?.value);
                 const message = document.getElementById('ruleTypeMessage')?.value.trim();
-                
                 if (!typeName || !minQty || minQty < 1 || !message) {
                     showToast("Заполните все поля", false);
                     return;
                 }
                 newRule = { type: "type", condition: { typeName, minQty }, message, icon: "📦" };
-                
             } else if (currentRuleType === 'product') {
-                const productName = document.getElementById('ruleProductSelect')?.value;
+                const productNames = Array.from(selectedProducts);
                 const minQty = parseInt(document.getElementById('ruleProductQty')?.value);
                 const message = document.getElementById('ruleProductMessage')?.value.trim();
-                
-                if (!productName || !minQty || minQty < 1 || !message) {
-                    showToast("Заполните все поля", false);
+                if (productNames.length === 0 || !minQty || minQty < 1 || !message) {
+                    showToast("Выберите хотя бы один товар и заполните все поля", false);
                     return;
                 }
-                newRule = { type: "product", condition: { productName, minQty }, message, icon: "🏷️" };
-                
+                newRule = { type: "product", condition: { productNames, minQty }, message, icon: "🏷️" };
             } else if (currentRuleType === 'price') {
                 const minSum = parseInt(document.getElementById('rulePriceMin')?.value);
                 const message = document.getElementById('rulePriceMessage')?.value.trim();
-                
                 if (!minSum || minSum < 1 || !message) {
                     showToast("Заполните все поля", false);
                     return;
@@ -642,32 +807,39 @@
                 if (currentRuleType === 'type') {
                     if(document.getElementById('ruleTypeQty')) document.getElementById('ruleTypeQty').value = '';
                     if(document.getElementById('ruleTypeMessage')) document.getElementById('ruleTypeMessage').value = '';
+                    const trigger = document.getElementById('ruleTypeSelect-trigger');
+                    if(trigger) trigger.textContent = 'Выберите тип мерча';
+                    const hidden = document.getElementById('ruleTypeSelect');
+                    if(hidden) hidden.value = '';
                 } else if (currentRuleType === 'product') {
                     if(document.getElementById('ruleProductQty')) document.getElementById('ruleProductQty').value = '';
                     if(document.getElementById('ruleProductMessage')) document.getElementById('ruleProductMessage').value = '';
+                    selectedProducts.clear();
+                    updateSelectedProductsDisplay();
+                    document.querySelectorAll('.multi-select-item input').forEach(cb => { cb.checked = false; });
                 } else if (currentRuleType === 'price') {
-                    if(document.getElementById('rulePriceMin')) document.getElementById('rulePriceMin').value = '';
+                    if(document.getElementById('rulePriceMin')) document.getElementById('rulePriceMin').value = '1000';
                     if(document.getElementById('rulePriceMessage')) document.getElementById('rulePriceMessage').value = '';
                 }
+                updateCartUI();
             }
         }
         
         function renderRulesList() {
             const container = document.getElementById('rules-list');
             if (!container) return;
-            
             if (rulesList.length === 0) {
                 container.innerHTML = '<div class="empty-cart">📭 Нет добавленных правил. Создайте новое!</div>';
                 return;
             }
-            
             let html = '';
             rulesList.forEach((rule, index) => {
                 let conditionText = '';
                 if (rule.type === 'type') {
                     conditionText = `Тип: ${rule.condition.typeName}, от ${rule.condition.minQty} шт`;
                 } else if (rule.type === 'product') {
-                    conditionText = `Товар: ${rule.condition.productName}, от ${rule.condition.minQty} шт`;
+                    const productsList = rule.condition.productNames.join(', ');
+                    conditionText = `Товары: ${productsList.length > 30 ? productsList.substring(0, 30) + '...' : productsList}, от ${rule.condition.minQty} шт`;
                 } else if (rule.type === 'price') {
                     conditionText = `Сумма: от ${rule.condition.minSum} ₽`;
                 }
@@ -688,17 +860,20 @@
             rulesList.splice(index, 1);
             saveRules();
             renderRulesList();
+            updateCartUI();
             showToast("Правило удалено", true);
         }
         
-        function resetDefaultRules() {
-            rulesList = JSON.parse(JSON.stringify(defaultRules));
+        function deleteAllRules() {
+            rulesList = [];
             saveRules();
             renderRulesList();
-            showToast("Правила сброшены к стандартным ✅", true);
+            updateCartUI();
+            showToast("Все правила удалены ✅", true);
         }
         
         function openRulesModal() {
+            selectedProducts.clear();
             renderRuleForm();
             renderRulesList();
             const modal = document.getElementById('rulesModal');
@@ -708,43 +883,36 @@
         function closeRulesModal() {
             const modal = document.getElementById('rulesModal');
             if (modal) modal.style.display = 'none';
+            closeAllRuleSelects();
         }
         
         // Проверка правил для корзины
         function checkRulesForCart() {
             const cartItems = Object.entries(cart);
             if (cartItems.length === 0) return [];
+            if (!originalCardsData.length) return [];
             
-            // Собираем информацию о товарах
             const cartInfo = {};
             let totalPrice = 0;
-            
             for (const [idxStr, qty] of cartItems) {
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
                 if (card) {
-                    if (!cartInfo[card.name]) {
-                        cartInfo[card.name] = { qty: 0, price: card.price, type: card.type };
-                    }
+                    if (!cartInfo[card.name]) cartInfo[card.name] = { qty: 0, price: card.price, type: card.type };
                     cartInfo[card.name].qty += qty;
                     totalPrice += qty * card.price;
                 }
             }
             
-            // Считаем количество по типам
             const typeQty = {};
             for (const [name, info] of Object.entries(cartInfo)) {
-                if (info.type) {
-                    typeQty[info.type] = (typeQty[info.type] || 0) + info.qty;
-                }
+                if (info.type) typeQty[info.type] = (typeQty[info.type] || 0) + info.qty;
             }
             
             const activeRules = [];
-            
             for (const rule of rulesList) {
                 let isActive = false;
                 let detailText = "";
-                
                 if (rule.type === 'type') {
                     const qty = typeQty[rule.condition.typeName] || 0;
                     if (qty >= rule.condition.minQty) {
@@ -752,10 +920,13 @@
                         detailText = `(в корзине ${qty} шт товаров типа "${rule.condition.typeName}", нужно от ${rule.condition.minQty})`;
                     }
                 } else if (rule.type === 'product') {
-                    const qty = cartInfo[rule.condition.productName]?.qty || 0;
-                    if (qty >= rule.condition.minQty) {
+                    let totalQty = 0;
+                    for (const productName of rule.condition.productNames) {
+                        totalQty += cartInfo[productName]?.qty || 0;
+                    }
+                    if (totalQty >= rule.condition.minQty) {
                         isActive = true;
-                        detailText = `(в корзине ${qty} шт "${rule.condition.productName}", нужно от ${rule.condition.minQty})`;
+                        detailText = `(в корзине ${totalQty} шт товаров из списка, нужно от ${rule.condition.minQty})`;
                     }
                 } else if (rule.type === 'price') {
                     if (totalPrice >= rule.condition.minSum) {
@@ -763,26 +934,19 @@
                         detailText = `(сумма ${totalPrice} ₽, нужно от ${rule.condition.minSum} ₽)`;
                     }
                 }
-                
                 if (isActive) {
-                    activeRules.push({
-                        icon: rule.icon || "✨",
-                        text: `${rule.message} ${detailText}`,
-                        type: rule.type
-                    });
+                    activeRules.push({ icon: rule.icon || "✨", text: `${rule.message} ${detailText}`, type: rule.type });
                 }
             }
-            
-            // Убираем дубликаты по тексту сообщения
             const uniqueRules = [];
             const seenMessages = new Set();
             for (const rule of activeRules) {
-                if (!seenMessages.has(rule.text.split('(')[0])) {
-                    seenMessages.add(rule.text.split('(')[0]);
+                const key = rule.text.split('(')[0];
+                if (!seenMessages.has(key)) {
+                    seenMessages.add(key);
                     uniqueRules.push(rule);
                 }
             }
-            
             return uniqueRules;
         }
         
@@ -792,12 +956,10 @@
         function showToast(message, isSuccess = true) {
             const existingToast = document.querySelector('.toast-notification');
             if (existingToast) existingToast.remove();
-            
             const toast = document.createElement('div');
             toast.className = 'toast-notification';
             toast.innerHTML = isSuccess ? `✅ ${message}` : `❌ ${message}`;
             document.body.appendChild(toast);
-            
             setTimeout(() => {
                 toast.classList.add('fade-out');
                 setTimeout(() => toast.remove(), 300);
@@ -812,7 +974,6 @@
             const cartItemsDiv = document.getElementById('cart-items-list');
             const cartTotalDiv = document.getElementById('cart-total');
             const cartActionsDiv = document.getElementById('cart-actions');
-            
             if (!cartItemsDiv) return;
             
             if (count === 0) {
@@ -823,7 +984,6 @@
             }
             
             const activeRules = checkRulesForCart();
-            
             let total = 0;
             let html = '';
             
@@ -832,7 +992,7 @@
                     <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--badge-text);">✨ Активные правила ✨</div>`;
                 for (const rule of activeRules) {
                     html += `<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); padding: 4px 0;">
-                        <span style="font-size: 16px;">${rule.icon}</span>
+                        <span style="font-size: 16px;">${escapeHtml(rule.icon)}</span>
                         <span>${escapeHtml(rule.text)}</span>
                     </div>`;
                 }
@@ -926,7 +1086,6 @@
                 showToast("Корзина пуста", false);
                 return;
             }
-    
             for (const [idxStr, qty] of items) {
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
@@ -935,33 +1094,25 @@
                     return;
                 }
             }
-    
             const total = items.reduce((sum, [idxStr, qty]) => {
                 const idx = parseInt(idxStr);
                 return sum + qty * originalCardsData[idx].price;
             }, 0);
-            
             const activeRules = checkRulesForCart();
             if (activeRules.length > 0) {
                 let rulesMessage = "Не забудьте:\n";
-                for (const rule of activeRules) {
-                    rulesMessage += `• ${rule.text}\n`;
-                }
+                for (const rule of activeRules) rulesMessage += `• ${rule.text}\n`;
                 showToast(rulesMessage, true);
             }
-    
             const cartCopy = { ...cart };
-            
             closeCartModal();
             cart = {};
             updateCartUI();
-    
             for (const [idxStr, qty] of Object.entries(cartCopy)) {
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
                 const newStock = card.stock - qty;
                 card.stock = newStock;
-        
                 const cards = document.querySelectorAll('.card');
                 let targetCard = null;
                 for (let i = 0; i < cards.length; i++) {
@@ -971,7 +1122,6 @@
                         break;
                     }
                 }
-        
                 if (targetCard) {
                     const stockSpan = targetCard.querySelector('.stock');
                     if (stockSpan) stockSpan.textContent = `Остаток: ${newStock} шт`;
@@ -981,19 +1131,15 @@
                     if (revenueSpan) revenueSpan.textContent = `📊 Выручка: ${revenue} ₽`;
                 }
             }
-    
             (async () => {
                 for (const [idxStr, qty] of Object.entries(cartCopy)) {
                     const idx = parseInt(idxStr);
                     for (let i = 0; i < qty; i++) {
-                        try {
-                            await fetch(`${API_URL}?action=update&row=${idx}&delta=-1&t=${Date.now()}`);
-                        } catch(e) { console.error(e); }
+                        try { await fetch(`${API_URL}?action=update&row=${idx}&delta=-1&t=${Date.now()}`); } catch(e) { console.error(e); }
                     }
                 }
                 showUpdateTime();
             })();
-    
             showToast(`Продажа на ${total} ₽ завершена!`, true);
         }
         
@@ -1026,25 +1172,18 @@
         function updateTypeFilterTrigger() {
             const trigger = document.getElementById('typeFilterTrigger');
             if (!trigger) return;
-            if (selectedTypes.size === 0) {
-                trigger.textContent = 'Все типы мерча';
-            } else if (selectedTypes.size === 1) {
-                trigger.textContent = Array.from(selectedTypes)[0];
-            } else {
-                trigger.textContent = `Выбрано: ${selectedTypes.size}`;
-            }
+            if (selectedTypes.size === 0) trigger.textContent = 'Все типы мерча';
+            else if (selectedTypes.size === 1) trigger.textContent = Array.from(selectedTypes)[0];
+            else trigger.textContent = `Выбрано: ${selectedTypes.size}`;
         }
         
         function buildTypeMultiSelect() {
             const dropdown = document.getElementById('typeFilterDropdown');
             if (!dropdown) return;
-            
             dropdown.innerHTML = '<div class="filter-option-header">Выберите типы мерча</div>';
-            
             typeOptions.forEach(type => {
                 const div = document.createElement('div');
                 div.className = 'filter-option';
-                
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.id = `type_${type}`;
@@ -1052,32 +1191,24 @@
                 checkbox.checked = selectedTypes.has(type);
                 checkbox.onchange = (e) => {
                     e.stopPropagation();
-                    if (checkbox.checked) {
-                        selectedTypes.add(type);
-                    } else {
-                        selectedTypes.delete(type);
-                    }
+                    if (checkbox.checked) selectedTypes.add(type);
+                    else selectedTypes.delete(type);
                     updateTypeFilterTrigger();
                 };
-                
                 const label = document.createElement('label');
                 label.htmlFor = `type_${type}`;
                 label.textContent = type;
-                
                 div.appendChild(checkbox);
                 div.appendChild(label);
                 dropdown.appendChild(div);
             });
-            
             const buttonsRow = document.createElement('div');
             buttonsRow.style.display = 'flex';
             buttonsRow.style.gap = '10px';
             buttonsRow.style.padding = '8px 12px';
             buttonsRow.style.borderTop = '1px solid var(--border-color)';
             buttonsRow.style.marginTop = '4px';
-            
             const isMobile = window.innerWidth <= 500;
-            
             const resetBtn = document.createElement('button');
             if (isMobile) {
                 resetBtn.textContent = '✕';
@@ -1097,13 +1228,10 @@
             resetBtn.onclick = (e) => {
                 e.stopPropagation();
                 selectedTypes.clear();
-                document.querySelectorAll('#typeFilterDropdown input[type="checkbox"]').forEach(cb => {
-                    cb.checked = false;
-                });
+                document.querySelectorAll('#typeFilterDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
                 updateTypeFilterTrigger();
                 filterAndSort();
             };
-            
             const applyBtn = document.createElement('button');
             if (isMobile) {
                 applyBtn.textContent = '✓';
@@ -1125,7 +1253,6 @@
                 filterAndSort();
                 document.getElementById('typeFilterDropdown').classList.remove('show');
             };
-            
             buttonsRow.appendChild(resetBtn);
             buttonsRow.appendChild(applyBtn);
             dropdown.appendChild(buttonsRow);
@@ -1134,7 +1261,6 @@
         function initSortSelect() {
             const sortTrigger = document.getElementById('sortByTrigger');
             const sortDropdown = document.getElementById('sortByDropdown');
-            
             const sortOptions = [
                 { value: "none", label: "Без сортировки" },
                 { value: "name", label: "По названию" },
@@ -1144,15 +1270,12 @@
                 { value: "priceDesc", label: "По цене: сначала дорогое" },
                 { value: "type", label: "По типу" }
             ];
-            
             function buildSortDropdown() {
                 sortDropdown.innerHTML = '';
-                
                 const header = document.createElement('div');
                 header.className = 'filter-option-header';
                 header.textContent = 'Выберите сортировку';
                 sortDropdown.appendChild(header);
-                
                 sortOptions.forEach(opt => {
                     const div = document.createElement('div');
                     div.className = 'sort-option';
@@ -1160,17 +1283,8 @@
                     div.style.fontWeight = currentSortBy === opt.value ? '600' : 'normal';
                     div.style.backgroundColor = currentSortBy === opt.value ? 'var(--badge-bg)' : 'transparent';
                     div.textContent = opt.label;
-                    
-                    div.onmouseenter = () => {
-                        if (currentSortBy !== opt.value) {
-                            div.style.backgroundColor = 'var(--badge-bg)';
-                        }
-                    };
-                    div.onmouseleave = () => {
-                        if (currentSortBy !== opt.value) {
-                            div.style.backgroundColor = 'transparent';
-                        }
-                    };
+                    div.onmouseenter = () => { if (currentSortBy !== opt.value) div.style.backgroundColor = 'var(--badge-bg)'; };
+                    div.onmouseleave = () => { if (currentSortBy !== opt.value) div.style.backgroundColor = 'transparent'; };
                     div.onclick = (e) => {
                         e.stopPropagation();
                         currentSortBy = opt.value;
@@ -1181,54 +1295,26 @@
                     sortDropdown.appendChild(div);
                 });
             }
-            
-            function closeSortDropdown() {
-                sortDropdown.classList.remove('show');
-            }
-            
-            sortTrigger.onclick = (e) => {
-                e.stopPropagation();
-                sortDropdown.classList.toggle('show');
-            };
-            
+            function closeSortDropdown() { sortDropdown.classList.remove('show'); }
+            sortTrigger.onclick = (e) => { e.stopPropagation(); sortDropdown.classList.toggle('show'); };
             document.addEventListener('click', () => closeSortDropdown());
-            
             buildSortDropdown();
         }
         
         function initCustomSelects() {
             initSortSelect();
-            
             const typeTrigger = document.getElementById('typeFilterTrigger');
             const typeDropdown = document.getElementById('typeFilterDropdown');
-            
-            function closeTypeDropdown() {
-                typeDropdown.classList.remove('show');
-            }
-            
-            typeTrigger.onclick = (e) => {
-                e.stopPropagation();
-                typeDropdown.classList.toggle('show');
-            };
-            
+            function closeTypeDropdown() { typeDropdown.classList.remove('show'); }
+            typeTrigger.onclick = (e) => { e.stopPropagation(); typeDropdown.classList.toggle('show'); };
             document.addEventListener('click', () => closeTypeDropdown());
         }
         
         function updateTypeOptions() {
             const types = new Set();
-            originalCardsData.forEach(card => {
-                if (card.type && card.type.trim()) {
-                    types.add(card.type);
-                }
-            });
+            originalCardsData.forEach(card => { if (card.type && card.type.trim()) types.add(card.type); });
             typeOptions = Array.from(types).sort();
-            
-            selectedTypes.forEach(type => {
-                if (!typeOptions.includes(type)) {
-                    selectedTypes.delete(type);
-                }
-            });
-            
+            selectedTypes.forEach(type => { if (!typeOptions.includes(type)) selectedTypes.delete(type); });
             buildTypeMultiSelect();
             updateTypeFilterTrigger();
         }
@@ -1236,15 +1322,8 @@
         function filterAndSort() {
             let filtered = [...originalCardsData];
             const searchText = document.getElementById('searchInput')?.value.toLowerCase() || '';
-            
-            if (searchText) {
-                filtered = filtered.filter(card => card.name.toLowerCase().includes(searchText));
-            }
-            
-            if (selectedTypes.size > 0) {
-                filtered = filtered.filter(card => selectedTypes.has(card.type));
-            }
-            
+            if (searchText) filtered = filtered.filter(card => card.name.toLowerCase().includes(searchText));
+            if (selectedTypes.size > 0) filtered = filtered.filter(card => selectedTypes.has(card.type));
             if (currentSortBy !== 'none') {
                 switch(currentSortBy) {
                     case 'name': filtered.sort((a, b) => a.name.localeCompare(b.name)); break;
@@ -1349,9 +1428,7 @@
                 container.style.display = 'block';
                 container.classList.add('active');
                 bar.style.width = '0%';
-                setTimeout(() => {
-                    if (bar) bar.style.width = '90%';
-                }, 50);
+                setTimeout(() => { if (bar) bar.style.width = '90%'; }, 50);
             }
         }
         
@@ -1371,30 +1448,22 @@
         async function loadData(showLoading = true, showProgress = false) {
             if (isLoading) return;
             isLoading = true;
-            
             const isAutoRefresh = showProgress && !showLoading;
-            
             if (!isAutoRefresh) {
                 const autoRefreshBadge = document.querySelector('.auto-refresh-badge');
                 if (autoRefreshBadge) {
                     autoRefreshBadge.style.opacity = '0';
                     autoRefreshBadge.style.visibility = 'hidden';
                 }
-                
-                if (showProgress) {
-                    showProgressBar();
-                }
-                
+                if (showProgress) showProgressBar();
                 if (showLoading) {
                     const container = document.getElementById('cards-container');
                     if (container) container.innerHTML = '<div class="loading">Загрузка бананчиков... 🍌</div>';
                 }
             }
-            
             try {
                 const response = await fetch(API_URL + "?action=get&t=" + Date.now());
                 const data = await response.json();
-                
                 if (data && data.length > 0) {
                     originalCardsData = data;
                     updateTypeOptions();
@@ -1413,12 +1482,8 @@
                 }
             } finally {
                 isLoading = false;
-                
                 if (!isAutoRefresh) {
-                    if (showProgress) {
-                        hideProgressBar();
-                    }
-                    
+                    if (showProgress) hideProgressBar();
                     const autoRefreshBadge = document.querySelector('.auto-refresh-badge');
                     if (autoRefreshBadge) {
                         autoRefreshBadge.style.opacity = '';
@@ -1455,13 +1520,14 @@
         function closeHistory() { const modal = document.getElementById('historyModal'); if (modal) modal.style.display = 'none'; }
         function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, function(m) { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; }); }
         
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.rule-custom-select')) closeAllRuleSelects();
+        });
+        
         window.onclick = function(event) { 
-            const modal = document.getElementById('historyModal'); 
-            if (event.target === modal) closeHistory();
-            const cartModal = document.getElementById('cartModal');
-            if (event.target === cartModal) closeCartModal();
-            const rulesModal = document.getElementById('rulesModal');
-            if (event.target === rulesModal) closeRulesModal();
+            if (event.target === document.getElementById('historyModal')) closeHistory();
+            if (event.target === document.getElementById('cartModal')) closeCartModal();
+            if (event.target === document.getElementById('rulesModal')) closeRulesModal();
         }
         
         function startAutoRefresh() { if (autoRefreshInterval) clearInterval(autoRefreshInterval); autoRefreshInterval = setInterval(() => { loadData(false, true); }, 60000); }
@@ -1471,9 +1537,7 @@
             if (searchInput) searchInput.value = '';
             selectedTypes.clear();
             updateTypeFilterTrigger();
-            document.querySelectorAll('#typeFilterDropdown input[type="checkbox"]').forEach(cb => {
-                cb.checked = false;
-            });
+            document.querySelectorAll('#typeFilterDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
             currentSortBy = 'none';
             const sortTrigger = document.getElementById('sortByTrigger');
             if (sortTrigger) sortTrigger.textContent = 'Без сортировки';
@@ -1521,6 +1585,9 @@
             const resetBtn = document.getElementById('resetFilters');
             if (searchInput) searchInput.addEventListener('input', () => filterAndSort());
             if (resetBtn) resetBtn.addEventListener('click', resetAllFilters);
+            // Привязываем кнопку Правила через addEventListener
+            const rulesBtn = document.getElementById('rulesButton');
+            if (rulesBtn) rulesBtn.addEventListener('click', openRulesModal);
             checkExistingAuth();
         });
     </script>
