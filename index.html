@@ -1,5 +1,3 @@
-Вот исправленный код — убрано подтверждение, добавлено красивое уведомление, которое автоматически исчезает через 2 секунды.
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -42,8 +40,6 @@
             --checkbox-bg: white;
             --cart-bg: #fff8f0;
             --cart-border: #f0d090;
-            --toast-bg: #2ecc71;
-            --toast-text: white;
         }
         
         /* ========== ТЁМНАЯ ТЕМА ========== */
@@ -76,8 +72,6 @@
             --checkbox-bg: #2a2110;
             --cart-bg: #2a2010;
             --cart-border: #5a4a2a;
-            --toast-bg: #27ae60;
-            --toast-text: #ffffff;
         }
         
         body {
@@ -87,45 +81,6 @@
             padding: 12px;
             padding-bottom: 70px;
             transition: background 0.3s ease, color 0.2s ease;
-        }
-        
-        /* Toast уведомление */
-        .toast-notification {
-            position: fixed;
-            top: 70px;
-            right: 16px;
-            background: var(--toast-bg);
-            color: var(--toast-text);
-            padding: 12px 20px;
-            border-radius: 30px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 2000;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            animation: slideIn 0.3s ease;
-            pointer-events: none;
-        }
-        .toast-notification.fade-out {
-            animation: fadeOut 0.3s ease forwards;
-        }
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                transform: translateX(100%);
-            }
         }
         
         /* КНОПКА КОРЗИНЫ (плавающая) */
@@ -886,22 +841,6 @@
         // ========== КОРЗИНА ==========
         let cart = {}; // { index: quantity }
         
-        // Функция показа уведомления
-        function showToast(message, isSuccess = true) {
-            const existingToast = document.querySelector('.toast-notification');
-            if (existingToast) existingToast.remove();
-            
-            const toast = document.createElement('div');
-            toast.className = 'toast-notification';
-            toast.innerHTML = isSuccess ? `✅ ${message}` : `❌ ${message}`;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.add('fade-out');
-                setTimeout(() => toast.remove(), 300);
-            }, 2000);
-        }
-        
         function updateCartUI() {
             const count = Object.values(cart).reduce((a, b) => a + b, 0);
             const cartCountSpan = document.getElementById('cartCount');
@@ -957,12 +896,11 @@
             const card = originalCardsData[index];
             if (!card) return;
             if (card.stock <= 0) {
-                showToast(`${card.name} закончился!`, false);
+                alert(`❌ ${card.name} закончился!`);
                 return;
             }
             cart[index] = (cart[index] || 0) + 1;
             updateCartUI();
-            showToast(`${card.name} +1`, true);
         }
         
         function changeCartQty(index, delta) {
@@ -972,7 +910,7 @@
             if (newQty <= 0) {
                 delete cart[index];
             } else if (newQty > card.stock) {
-                showToast(`Нельзя добавить больше, чем есть (${card.stock} шт)`, false);
+                alert(`❌ Нельзя добавить больше, чем есть в наличии (${card.stock} шт)`);
                 return;
             } else {
                 cart[index] = newQty;
@@ -981,8 +919,6 @@
         }
         
         function removeFromCart(index) {
-            const card = originalCardsData[index];
-            if (card) showToast(`${card.name} удалён из корзины`, true);
             delete cart[index];
             updateCartUI();
         }
@@ -990,7 +926,6 @@
         function clearCart() {
             cart = {};
             updateCartUI();
-            showToast(`Корзина очищена`, true);
         }
         
         function openCartModal() {
@@ -1007,7 +942,7 @@
         async function checkout() {
             const items = Object.entries(cart);
             if (items.length === 0) {
-                showToast("Корзина пуста", false);
+                alert("Корзина пуста");
                 return;
             }
             
@@ -1016,7 +951,7 @@
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
                 if (qty > card.stock) {
-                    showToast(`Не хватает "${card.name}" (нужно ${qty}, есть ${card.stock})`, false);
+                    alert(`❌ Не хватает "${card.name}" (нужно ${qty}, есть ${card.stock})`);
                     return;
                 }
             }
@@ -1026,11 +961,13 @@
                 return sum + qty * originalCardsData[idx].price;
             }, 0);
             
+            if (!confirm(`🍌 Продать всё на сумму ${total} ₽?\nТовары будут списаны со склада.`)) return;
+            
             // Продаём по одному товару (каждый -1 несколько раз)
             for (const [idxStr, qty] of items) {
                 const idx = parseInt(idxStr);
                 for (let i = 0; i < qty; i++) {
-                    await updateStock(idx, -1, true);
+                    await updateStock(idx, -1, true); // тихое обновление
                 }
             }
             
@@ -1041,7 +978,7 @@
             
             // Принудительно обновляем данные
             await loadData(true, true);
-            showToast(`Продажа на ${total} ₽ завершена! 🍌`, true);
+            alert("✅ Продажа завершена!");
         }
         
         // ========== ОСТАЛЬНОЙ КОД ==========
@@ -1371,15 +1308,15 @@
             const card = originalCardsData[index];
             if (!card) return;
             const newStock = card.stock + delta;
-            if (newStock < 0) { if (!silent) showToast("Остаток не может быть меньше 0", false); return; }
-            if (newStock > card.total) { if (!silent) showToast("Остаток не может быть больше " + card.total, false); return; }
+            if (newStock < 0) { if (!silent) alert("Остаток не может быть меньше 0 🍌"); return; }
+            if (newStock > card.total) { if (!silent) alert("Остаток не может быть больше " + card.total + " 🍌"); return; }
             card.stock = newStock;
             filterAndSort();
             try {
                 const response = await fetch(`${API_URL}?action=update&row=${index}&delta=${delta}&t=${Date.now()}`);
                 const result = await response.json();
-                if (!result.success && !silent) { await loadData(true, true); showToast("Ошибка: " + (result.error || "неизвестная"), false); }
-            } catch (error) { console.error(error); if (!silent) { await loadData(true, true); showToast("Ошибка соединения", false); } }
+                if (!result.success && !silent) { await loadData(true, true); alert("Ошибка: " + (result.error || "неизвестная")); }
+            } catch (error) { console.error(error); if (!silent) { await loadData(true, true); alert("Ошибка соединения"); } }
         }
         
         function showUpdateTime() {
@@ -1447,7 +1384,7 @@
                     updateTypeOptions();
                     filterAndSort();
                     showUpdateTime();
-                    updateCartUI();
+                    updateCartUI(); // обновляем корзину (могли измениться остатки)
                 } else if (showLoading && !isAutoRefresh) {
                     const container = document.getElementById('cards-container');
                     if (container) container.innerHTML = '<div class="loading">Нет данных. Проверьте таблицу и лист "Мерч". 🍌</div>';
@@ -1567,4 +1504,3 @@
     </script>
 </body>
 </html>
-```
