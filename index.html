@@ -46,6 +46,8 @@
             --toast-text: white;
             --out-of-stock-bg: #e8e8e8;
             --zero-cart-badge-bg: #aaa;
+            --cart-disabled-bg: #f0f0f0;
+            --cart-disabled-text: #999;
         }
         
         /* ========== ТЁМНАЯ ТЕМА ========== */
@@ -84,6 +86,8 @@
             --toast-text: #ffffff;
             --out-of-stock-bg: #2a2a2a;
             --zero-cart-badge-bg: #555;
+            --cart-disabled-bg: #3a3a3a;
+            --cart-disabled-text: #888;
         }
         
         body {
@@ -256,6 +260,8 @@
             transition: background 0.1s;
             font-size: 13px;
             color: var(--text-primary);
+            width: 100%;
+            box-sizing: border-box;
         }
         .type-select-item:hover {
             background: var(--badge-bg);
@@ -369,11 +375,19 @@
         
         .info { flex: 3; min-width: 120px; padding-right: 50px; }
         .title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+        
+        /* Цветные бейджи для типов */
         .type-badge {
-            display: inline-block; background: var(--badge-bg); padding: 2px 8px;
-            border-radius: 16px; font-size: 11px; font-weight: 500;
-            color: var(--badge-text); line-height: 1.3; white-space: nowrap;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.3;
+            white-space: nowrap;
         }
+        /* Цвета для типов будут задаваться динамически через JS */
+        
         .name { font-weight: bold; font-size: 22px; color: var(--text-primary); line-height: 1.2; }
         .stock { font-size: 20px; font-weight: bold; color: var(--stock-color); margin-top: 0; margin-bottom: 3px; }
         .total, .price, .revenue { font-size: 11px; font-weight: 500; margin-top: 0; margin-bottom: 2px; line-height: 1.3; }
@@ -436,7 +450,7 @@
             100% { opacity: 0.3; transform: scale(0.8); }
         }
         
-        /* Модальные окна — центрирование */
+        /* Модальные окна */
         .modal {
             display: none;
             position: fixed;
@@ -471,7 +485,7 @@
         }
         .modal-close-btn {
             position: absolute;
-            top: 20px;
+            top: 14px;
             right: 20px;
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -488,6 +502,7 @@
             z-index: 1100;
         }
         
+        /* История */
         .history-item { 
             border-bottom: 1px solid var(--border-color); 
             padding: 12px 0;
@@ -496,11 +511,6 @@
             font-size: 11px; 
             color: var(--text-muted);
             margin-bottom: 6px;
-        }
-        .history-name { 
-            font-weight: bold; 
-            font-size: 15px; 
-            color: var(--text-primary);
         }
         .history-details {
             font-size: 12px;
@@ -524,6 +534,54 @@
             border-radius: 20px;
             font-size: 11px;
             margin-left: 8px;
+        }
+        
+        /* Фильтры истории */
+        .history-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .history-filter-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        .history-filter-btn.active {
+            background: var(--btn-bg);
+            color: white;
+            border-color: var(--btn-bg);
+        }
+        .history-filter-input {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 12px;
+            width: 120px;
+        }
+        .history-filter-sum {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .history-filter-sum input {
+            width: 80px;
+            padding: 6px 8px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 12px;
         }
         
         .login-card { background: var(--card-bg); border: 2px solid var(--border-color); }
@@ -552,7 +610,7 @@
         .rule-select-option { padding: 10px 14px; cursor: pointer; transition: background 0.1s; font-size: 13px; color: var(--text-primary); }
         .rule-select-option:hover { background: var(--badge-bg); }
         
-        /* Множественный выбор товаров (без чекбоксов) */
+        /* Множественный выбор товаров */
         .multi-select-container {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -620,8 +678,11 @@
             border-bottom: 1px solid var(--border-color);
         }
         .cart-item.disabled {
-            opacity: 0.5;
-            background: var(--out-of-stock-bg);
+            opacity: 0.6;
+            background: var(--cart-disabled-bg);
+        }
+        .cart-item.disabled .cart-item-name {
+            color: var(--cart-disabled-text);
         }
         .cart-item-info { flex: 2; }
         .cart-item-name { font-weight: bold; font-size: 16px; color: var(--text-primary); }
@@ -637,7 +698,7 @@
             opacity: 0.4;
             cursor: not-allowed;
         }
-        .cart-item-qty { font-weight: bold; min-width: 30px; text-align: center; font-size: 16px; }
+        .cart-item-qty { font-weight: bold; min-width: 30px; text-align: center; font-size: 16px; color: var(--text-primary); }
         .cart-item-remove {
             background: none; border: none; font-size: 20px; cursor: pointer;
             color: var(--minus-color); width: 36px; height: 36px; box-shadow: none;
@@ -650,6 +711,14 @@
         .cart-checkout { flex: 2; background: var(--btn-bg); color: white; width: auto; padding: 12px; font-size: 16px; border-radius: 30px; border: none; cursor: pointer; }
         .cart-clear { flex: 1; background: var(--reset-bg); color: var(--reset-color); width: auto; padding: 12px; font-size: 14px; border-radius: 30px; border: none; cursor: pointer; }
         .empty-cart { text-align: center; padding: 40px; color: var(--text-muted); }
+        
+        /* Правила в корзине */
+        .rule-text-bold {
+            font-weight: bold;
+        }
+        .rule-text-normal {
+            font-weight: normal;
+        }
         
         /* Стили для стрелочек в разделе "По сумме" */
         .price-control {
@@ -709,7 +778,8 @@
             .cart-qty-badge { top: 4px; right: 8px; font-size: 10px; padding: 1px 6px; }
             .price-step-btn { width: 38px; height: 38px; font-size: 16px; }
             .modal-content { width: calc(100% - 30px); margin: 15px auto; }
-            .modal-close-btn { top: 12px; right: 12px; width: 32px; height: 32px; font-size: 18px; }
+            .modal-close-btn { top: 10px; right: 12px; width: 32px; height: 32px; font-size: 18px; }
+            .history-filter-input { width: 100px; }
         }
     </style>
 </head>
@@ -833,6 +903,19 @@
             <div class="modal-header">
                 <span>📜 История операций</span>
             </div>
+            <div class="history-filters">
+                <button class="history-filter-btn" data-filter="all" onclick="setHistoryTypeFilter('all')">Все</button>
+                <button class="history-filter-btn" data-filter="basket" onclick="setHistoryTypeFilter('basket')">Корзина</button>
+                <button class="history-filter-btn" data-filter="single" onclick="setHistoryTypeFilter('single')">Поштучно</button>
+                <button class="history-filter-btn" data-filter="sale" onclick="setHistoryTypeFilter('sale')">Продажи</button>
+                <button class="history-filter-btn" data-filter="return" onclick="setHistoryTypeFilter('return')">Возвраты</button>
+                <input type="date" id="historyDateFrom" class="history-filter-input" placeholder="с">
+                <input type="date" id="historyDateTo" class="history-filter-input" placeholder="по">
+                <div class="history-filter-sum">
+                    <span>💰 от</span>
+                    <input type="number" id="historyMinSum" placeholder="0" value="0">
+                </div>
+            </div>
             <div id="history-list">
                 <div class="loading">Загрузка истории...</div>
             </div>
@@ -852,8 +935,24 @@
         let currentSortBy = "none";
         let typeOptions = [];
         
-        // ========== ИСТОРИЯ (сохраняется локально) ==========
-        let salesHistory = []; // { date, items: [{name, qty, price}], total, type }
+        // Цвета для типов мерча
+        let typeColors = new Map();
+        const colorPalette = [
+            '#e67e22', '#f39c12', '#2ecc71', '#3498db', '#9b59b6', 
+            '#e74c3c', '#1abc9c', '#f1c40f', '#e67e22', '#95a5a6'
+        ];
+        
+        function getTypeColor(type) {
+            if (!typeColors.has(type)) {
+                const index = typeColors.size % colorPalette.length;
+                typeColors.set(type, colorPalette[index]);
+            }
+            return typeColors.get(type);
+        }
+        
+        // ========== ИСТОРИЯ ==========
+        let salesHistory = [];
+        let historyTypeFilter = "all";
         
         function loadHistory() {
             const saved = localStorage.getItem('merch_sales_history');
@@ -868,21 +967,103 @@
             localStorage.setItem('merch_sales_history', JSON.stringify(salesHistory));
         }
         
-        function addToHistory(items, total, type) {
+        function addToHistory(items, total, type, isReturn = false) {
             const entry = {
                 date: new Date().toISOString(),
                 items: items.map(item => ({ name: item.name, qty: item.qty, price: item.price })),
                 total: total,
-                type: type // 'basket' - массовая продажа, 'single' - одиночная
+                type: type,
+                isReturn: isReturn
             };
-            salesHistory.unshift(entry); // новые записи сверху
-            if (salesHistory.length > 100) salesHistory = salesHistory.slice(0, 100);
+            salesHistory.unshift(entry);
+            if (salesHistory.length > 200) salesHistory = salesHistory.slice(0, 200);
             saveHistory();
         }
         
-        function addSingleSaleToHistory(name, qty, price) {
+        function addSingleSaleToHistory(name, qty, price, isReturn = false) {
             const total = qty * price;
-            addToHistory([{ name: name, qty: qty, price: price }], total, 'single');
+            addToHistory([{ name: name, qty: qty, price: price }], total, 'single', isReturn);
+        }
+        
+        function setHistoryTypeFilter(filter) {
+            historyTypeFilter = filter;
+            document.querySelectorAll('.history-filter-btn').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            renderHistoryList();
+        }
+        
+        function renderHistoryList() {
+            const container = document.getElementById('history-list');
+            if (!container) return;
+            
+            const dateFrom = document.getElementById('historyDateFrom')?.value;
+            const dateTo = document.getElementById('historyDateTo')?.value;
+            const minSum = parseInt(document.getElementById('historyMinSum')?.value) || 0;
+            
+            let filtered = [...salesHistory];
+            
+            // Фильтр по типу операции
+            if (historyTypeFilter === 'basket') {
+                filtered = filtered.filter(e => e.type === 'basket');
+            } else if (historyTypeFilter === 'single') {
+                filtered = filtered.filter(e => e.type === 'single');
+            } else if (historyTypeFilter === 'sale') {
+                filtered = filtered.filter(e => !e.isReturn);
+            } else if (historyTypeFilter === 'return') {
+                filtered = filtered.filter(e => e.isReturn === true);
+            }
+            
+            // Фильтр по дате
+            if (dateFrom) {
+                const fromDate = new Date(dateFrom);
+                fromDate.setHours(0, 0, 0, 0);
+                filtered = filtered.filter(e => new Date(e.date) >= fromDate);
+            }
+            if (dateTo) {
+                const toDate = new Date(dateTo);
+                toDate.setHours(23, 59, 59, 999);
+                filtered = filtered.filter(e => new Date(e.date) <= toDate);
+            }
+            
+            // Фильтр по сумме
+            if (minSum > 0) {
+                filtered = filtered.filter(e => e.total >= minSum);
+            }
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-cart">🍌 История пуста</div>';
+                return;
+            }
+            
+            let html = '';
+            for (const entry of filtered) {
+                const date = new Date(entry.date);
+                const dateStr = date.toLocaleString('ru-RU');
+                const isBasket = entry.type === 'basket';
+                const isReturn = entry.isReturn;
+                
+                let itemsHtml = '';
+                for (const item of entry.items) {
+                    itemsHtml += `<div>• ${item.name}: ${item.qty} шт × ${item.price} ₽ = ${item.qty * item.price} ₽</div>`;
+                }
+                
+                const typeLabel = isBasket ? 'Корзина' : 'Поштучно';
+                const actionLabel = isReturn ? 'Возврат' : 'Продажа';
+                
+                html += `
+                    <div class="history-item">
+                        <div class="history-date">${dateStr} <span class="history-badge">${typeLabel}</span> <span class="history-badge" style="background:${isReturn ? 'var(--minus-bg)' : 'var(--badge-bg)'}">${actionLabel}</span></div>
+                        <div class="history-details">${itemsHtml}</div>
+                        <div class="${isReturn ? 'history-return' : 'history-sale'}">${isReturn ? '↩️' : '💰'} Итого: ${entry.total} ₽</div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
         }
         
         // ========== ПРАВИЛА ==========
@@ -1208,19 +1389,10 @@
                     }
                 }
                 if (isActive) {
-                    activeRules.push({ icon: rule.icon || "✨", text: `${rule.message} ${detailText}`, type: rule.type });
+                    activeRules.push({ icon: rule.icon || "✨", message: rule.message, condition: detailText });
                 }
             }
-            const uniqueRules = [];
-            const seenMessages = new Set();
-            for (const rule of activeRules) {
-                const key = rule.text.split('(')[0];
-                if (!seenMessages.has(key)) {
-                    seenMessages.add(key);
-                    uniqueRules.push(rule);
-                }
-            }
-            return uniqueRules;
+            return activeRules;
         }
         
         // ========== КОРЗИНА ==========
@@ -1247,7 +1419,7 @@
                     
                     let badge = card.querySelector('.cart-qty-badge');
                     
-                    if (cart.hasOwnProperty(idx)) {
+                    if (cart.hasOwnProperty(idx) && cart[idx] > 0) {
                         const qtyInCart = cart[idx];
                         if (!badge) {
                             badge = document.createElement('div');
@@ -1256,13 +1428,8 @@
                             card.appendChild(badge);
                         }
                         badge.textContent = qtyInCart;
-                        if (qtyInCart === 0) {
-                            badge.style.opacity = '0.7';
-                            badge.style.background = 'var(--zero-cart-badge-bg, #aaa)';
-                        } else {
-                            badge.style.opacity = '1';
-                            badge.style.background = 'var(--btn-bg)';
-                        }
+                        badge.style.opacity = '1';
+                        badge.style.background = 'var(--btn-bg)';
                     } else {
                         if (badge) badge.remove();
                     }
@@ -1300,7 +1467,7 @@
                 for (const rule of activeRules) {
                     html += `<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); padding: 4px 0;">
                         <span style="font-size: 16px;">${escapeHtml(rule.icon)}</span>
-                        <span>${escapeHtml(rule.text)}</span>
+                        <span><span class="rule-text-bold">${escapeHtml(rule.message)}</span> <span class="rule-text-normal">${escapeHtml(rule.condition)}</span></span>
                     </div>`;
                 }
                 html += `</div>`;
@@ -1415,8 +1582,15 @@
             } catch (error) { console.error(error); if (!silent) { await loadData(true, true); showToast("Ошибка соединения", false); } }
             updateCartBadges();
             
-            if (!silent && delta === -1) {
-                addSingleSaleToHistory(card.name, 1, card.price);
+            if (!silent) {
+                const isReturn = delta === 1;
+                if (delta === -1) {
+                    addSingleSaleToHistory(card.name, 1, card.price, false);
+                    showToast(`Продажа: ${card.name} -1 шт`, true);
+                } else if (delta === 1) {
+                    addSingleSaleToHistory(card.name, 1, card.price, true);
+                    showToast(`Возврат: ${card.name} +1 шт`, true);
+                }
             }
         }
         
@@ -1441,7 +1615,7 @@
             const activeRules = checkRulesForCart();
             if (activeRules.length > 0) {
                 let rulesMessage = "Не забудьте:\n";
-                for (const rule of activeRules) rulesMessage += `• ${rule.text}\n`;
+                for (const rule of activeRules) rulesMessage += `• ${rule.message}\n`;
                 showToast(rulesMessage, true);
             }
             
@@ -1450,7 +1624,7 @@
                 const card = originalCardsData[idx];
                 return { name: card.name, qty: qty, price: card.price };
             });
-            addToHistory(historyItems, total, 'basket');
+            addToHistory(historyItems, total, 'basket', false);
             
             const cartCopy = { ...cart };
             closeCartModal();
@@ -1529,7 +1703,7 @@
             typeOptions.forEach(type => {
                 const isSelected = tempSelectedTypes.has(type);
                 html += `
-                    <div class="type-select-item ${isSelected ? 'selected' : ''}" onclick="toggleTempTypeSelection('${escapeHtml(type)}')">
+                    <div class="type-select-item ${isSelected ? 'selected' : ''}" data-type="${escapeHtml(type)}">
                         <span>${escapeHtml(type)}</span>
                         ${isSelected ? '<span class="type-select-check">✓</span>' : ''}
                     </div>
@@ -1544,6 +1718,15 @@
             `;
             
             dropdown.innerHTML = html;
+            
+            // Привязываем события к каждому элементу
+            document.querySelectorAll('.type-select-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const type = item.dataset.type;
+                    toggleTempTypeSelection(type);
+                });
+            });
             
             const resetBtn = document.getElementById('typeResetBtn');
             const applyBtn = document.getElementById('typeApplyBtn');
@@ -1578,8 +1761,7 @@
             }
             const items = document.querySelectorAll('.type-select-item');
             items.forEach(item => {
-                const span = item.querySelector('span:first-child');
-                if (span && span.textContent === type) {
+                if (item.dataset.type === type) {
                     if (tempSelectedTypes.has(type)) {
                         item.classList.add('selected');
                         if (!item.querySelector('.type-select-check')) {
@@ -1729,13 +1911,14 @@
                 const sold = total - stock;
                 const revenue = sold * price;
                 const isOutOfStock = stock === 0;
+                const typeColor = type ? getTypeColor(type) : '#c25d1a';
                 const cardDiv = document.createElement('div');
                 cardDiv.className = `card ${isOutOfStock ? 'out-of-stock' : ''}`;
                 cardDiv.style.position = 'relative';
                 cardDiv.innerHTML = `
                     <div class="info">
                         <div class="title-row">
-                            ${type ? `<span class="type-badge">${escapeHtml(type)}</span>` : ''}
+                            ${type ? `<span class="type-badge" style="background: ${typeColor}20; color: ${typeColor}; border: 1px solid ${typeColor}40;">${escapeHtml(type)}</span>` : ''}
                             <span class="name">${escapeHtml(name)}</span>
                         </div>
                         <div class="stock">Остаток: ${stock} шт</div>
@@ -1856,34 +2039,10 @@
         
         function showHistory() {
             const modal = document.getElementById('historyModal');
-            const historyList = document.getElementById('history-list');
-            if (!modal || !historyList) return;
-            
-            if (salesHistory.length === 0) {
-                historyList.innerHTML = '<div class="empty-cart">🍌 История пуста</div>';
-            } else {
-                let html = '';
-                for (const entry of salesHistory) {
-                    const date = new Date(entry.date);
-                    const dateStr = date.toLocaleString('ru-RU');
-                    const isBasket = entry.type === 'basket';
-                    
-                    let itemsHtml = '';
-                    for (const item of entry.items) {
-                        itemsHtml += `<div>• ${item.name}: ${item.qty} шт × ${item.price} ₽ = ${item.qty * item.price} ₽</div>`;
-                    }
-                    
-                    html += `
-                        <div class="history-item">
-                            <div class="history-date">${dateStr} ${isBasket ? '<span class="history-badge">Корзина</span>' : '<span class="history-badge">Поштучно</span>'}</div>
-                            <div class="history-details">${itemsHtml}</div>
-                            <div class="history-sale">💰 Итого: ${entry.total} ₽</div>
-                        </div>
-                    `;
-                }
-                historyList.innerHTML = html;
+            if (modal) {
+                renderHistoryList();
+                modal.style.display = 'block';
             }
-            modal.style.display = 'block';
         }
         
         function closeHistory() { 
@@ -1902,6 +2061,10 @@
             if (event.target === document.getElementById('cartModal')) closeCartModal();
             if (event.target === document.getElementById('rulesModal')) closeRulesModal();
         }
+        
+        document.getElementById('historyDateFrom')?.addEventListener('change', () => renderHistoryList());
+        document.getElementById('historyDateTo')?.addEventListener('change', () => renderHistoryList());
+        document.getElementById('historyMinSum')?.addEventListener('input', () => renderHistoryList());
         
         function startAutoRefresh() { if (autoRefreshInterval) clearInterval(autoRefreshInterval); autoRefreshInterval = setInterval(() => { loadData(false, true); }, 60000); }
         
