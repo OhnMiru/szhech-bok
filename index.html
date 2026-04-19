@@ -386,7 +386,6 @@
             line-height: 1.3;
             white-space: nowrap;
         }
-        /* Цвета для типов будут задаваться динамически через JS */
         
         .name { font-weight: bold; font-size: 22px; color: var(--text-primary); line-height: 1.2; }
         .stock { font-size: 20px; font-weight: bold; color: var(--stock-color); margin-top: 0; margin-bottom: 3px; }
@@ -536,14 +535,21 @@
             margin-left: 8px;
         }
         
-        /* Фильтры истории */
+        /* Фильтры истории - улучшенная версия */
         .history-filters {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 16px;
             padding-bottom: 12px;
             border-bottom: 1px solid var(--border-color);
+            align-items: center;
+        }
+        .history-filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
         }
         .history-filter-btn {
             padding: 6px 14px;
@@ -554,6 +560,7 @@
             font-size: 12px;
             color: var(--text-primary);
             transition: all 0.2s;
+            white-space: nowrap;
         }
         .history-filter-btn.active {
             background: var(--btn-bg);
@@ -567,16 +574,24 @@
             background: var(--card-bg);
             color: var(--text-primary);
             font-size: 12px;
-            width: 120px;
+            width: 130px;
         }
         .history-filter-sum {
             display: flex;
             align-items: center;
             gap: 6px;
+            background: var(--card-bg);
+            padding: 3px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .history-filter-sum span {
+            font-size: 12px;
+            color: var(--text-secondary);
         }
         .history-filter-sum input {
-            width: 80px;
-            padding: 6px 8px;
+            width: 70px;
+            padding: 4px 6px;
             border-radius: 20px;
             border: 1px solid var(--border-color);
             background: var(--card-bg);
@@ -780,6 +795,8 @@
             .modal-content { width: calc(100% - 30px); margin: 15px auto; }
             .modal-close-btn { top: 10px; right: 12px; width: 32px; height: 32px; font-size: 18px; }
             .history-filter-input { width: 100px; }
+            .history-filter-group { gap: 6px; }
+            .history-filter-btn { padding: 5px 10px; font-size: 11px; }
         }
     </style>
 </head>
@@ -904,13 +921,17 @@
                 <span>📜 История операций</span>
             </div>
             <div class="history-filters">
-                <button class="history-filter-btn" data-filter="all" onclick="setHistoryTypeFilter('all')">Все</button>
-                <button class="history-filter-btn" data-filter="basket" onclick="setHistoryTypeFilter('basket')">Корзина</button>
-                <button class="history-filter-btn" data-filter="single" onclick="setHistoryTypeFilter('single')">Поштучно</button>
-                <button class="history-filter-btn" data-filter="sale" onclick="setHistoryTypeFilter('sale')">Продажи</button>
-                <button class="history-filter-btn" data-filter="return" onclick="setHistoryTypeFilter('return')">Возвраты</button>
-                <input type="date" id="historyDateFrom" class="history-filter-input" placeholder="с">
-                <input type="date" id="historyDateTo" class="history-filter-input" placeholder="по">
+                <div class="history-filter-group">
+                    <button class="history-filter-btn" data-filter="all" onclick="setHistoryTypeFilter('all')">Все</button>
+                    <button class="history-filter-btn" data-filter="basket" onclick="setHistoryTypeFilter('basket')">Корзина</button>
+                    <button class="history-filter-btn" data-filter="single" onclick="setHistoryTypeFilter('single')">Поштучно</button>
+                    <button class="history-filter-btn" data-filter="sale" onclick="setHistoryTypeFilter('sale')">Продажи</button>
+                    <button class="history-filter-btn" data-filter="return" onclick="setHistoryTypeFilter('return')">Возвраты</button>
+                </div>
+                <div class="history-filter-group">
+                    <input type="date" id="historyDateFrom" class="history-filter-input" placeholder="с">
+                    <input type="date" id="historyDateTo" class="history-filter-input" placeholder="по">
+                </div>
                 <div class="history-filter-sum">
                     <span>💰 от</span>
                     <input type="number" id="historyMinSum" placeholder="0" value="0">
@@ -1719,7 +1740,6 @@
             
             dropdown.innerHTML = html;
             
-            // Привязываем события к каждому элементу
             document.querySelectorAll('.type-select-item').forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.stopPropagation();
