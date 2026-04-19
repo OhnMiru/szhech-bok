@@ -28,7 +28,7 @@
             --plus-bg: #fff0d0;
             --plus-color: #e67e22;
             --add-to-cart-bg: #f39c12;
-            --add-to-cart-color: white;
+            --add-to-cart-color: #8B5E3C;
             --btn-bg: #f39c12;
             --footer-bg: white;
             --shadow: rgba(0,0,0,0.08);
@@ -66,7 +66,7 @@
             --plus-bg: #3a2a10;
             --plus-color: #f39c12;
             --add-to-cart-bg: #e67e22;
-            --add-to-cart-color: #ffffff;
+            --add-to-cart-color: #D2691E;
             --btn-bg: #e67e22;
             --footer-bg: #1e1708;
             --shadow: rgba(0,0,0,0.5);
@@ -116,7 +116,7 @@
             font-size: 13px;
         }
         
-        /* Кнопка смены темы — на одном уровне с заголовком */
+        /* Кнопка смены темы */
         .theme-toggle {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -486,6 +486,39 @@
         .cart-clear { flex: 1; background: var(--reset-bg); color: var(--reset-color); width: auto; padding: 12px; font-size: 14px; border-radius: 30px; border: none; cursor: pointer; }
         .empty-cart { text-align: center; padding: 40px; color: var(--text-muted); }
         
+        /* Стили для стрелочек в разделе "По сумме" (как в количестве штук) */
+        .price-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .price-control input {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+        .price-step-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 22px;
+            background: var(--badge-bg);
+            border: 1px solid var(--border-color);
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .price-step-btn:active { transform: scale(0.95); }
+        
         @media (min-width: 1024px) {
             .title-row { margin-bottom: 2px; }
             .name { font-size: 24px; }
@@ -509,6 +542,7 @@
             .cart-fab { bottom: 70px; right: 12px; width: 50px; height: 50px; font-size: 22px; }
             .info { padding-right: 40px; }
             .cart-qty-badge { top: 4px; right: 8px; font-size: 10px; padding: 1px 6px; }
+            .price-step-btn { width: 38px; height: 38px; font-size: 16px; }
         }
     </style>
 </head>
@@ -760,6 +794,16 @@
             updateSelectedProductsDisplay();
         }
         
+        // Функция для изменения значения суммы на 100
+        function changePriceValue(delta) {
+            const input = document.getElementById('rulePriceMin');
+            if (input) {
+                let val = parseInt(input.value) || 0;
+                val = Math.max(1, val + delta);
+                input.value = val;
+            }
+        }
+        
         function renderRuleForm() {
             const container = document.getElementById('ruleTypeContent');
             if (!container) return;
@@ -786,7 +830,11 @@
                 renderProductMultiSelect(false);
             } else if (currentRuleType === 'price') {
                 container.innerHTML = `
-                    <input type="number" id="rulePriceMin" class="rule-styled-input" placeholder="Минимальная сумма (₽)" min="1" step="100" value="1000">
+                    <div class="price-control">
+                        <input type="number" id="rulePriceMin" class="rule-styled-input" placeholder="Минимальная сумма (₽)" min="1" value="1000">
+                        <button type="button" class="price-step-btn" onclick="changePriceValue(-100)">−</button>
+                        <button type="button" class="price-step-btn" onclick="changePriceValue(100)">+</button>
+                    </div>
                     <input type="text" id="rulePriceMessage" class="rule-styled-input" placeholder="Что выводить? (например: Печать в бланк)">
                 `;
                 const priceInput = document.getElementById('rulePriceMin');
