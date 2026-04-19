@@ -48,6 +48,7 @@
             --zero-cart-badge-bg: #aaa;
             --cart-disabled-bg: #f0f0f0;
             --cart-disabled-text: #999;
+            --calendar-icon-filter: none;
         }
         
         /* ========== ТЁМНАЯ ТЕМА ========== */
@@ -88,6 +89,7 @@
             --zero-cart-badge-bg: #555;
             --cart-disabled-bg: #3a3a3a;
             --cart-disabled-text: #888;
+            --calendar-icon-filter: invert(1) hue-rotate(180deg);
         }
         
         body {
@@ -538,11 +540,16 @@
         /* Фильтры истории - улучшенная версия */
         .history-filters {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             gap: 12px;
             margin-bottom: 16px;
             padding-bottom: 12px;
             border-bottom: 1px solid var(--border-color);
+        }
+        .history-filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
             align-items: center;
         }
         .history-filter-group {
@@ -550,52 +557,93 @@
             flex-wrap: wrap;
             gap: 8px;
             align-items: center;
+            background: var(--card-bg);
+            padding: 6px 12px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+        }
+        .history-filter-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-right: 4px;
         }
         .history-filter-btn {
             padding: 6px 14px;
             border-radius: 20px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
+            border: none;
+            background: transparent;
             cursor: pointer;
             font-size: 12px;
             color: var(--text-primary);
             transition: all 0.2s;
             white-space: nowrap;
         }
+        .history-filter-btn:hover {
+            background: var(--badge-bg);
+        }
         .history-filter-btn.active {
             background: var(--btn-bg);
             color: white;
-            border-color: var(--btn-bg);
         }
-        .history-filter-input {
-            padding: 6px 12px;
-            border-radius: 20px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
-            color: var(--text-primary);
-            font-size: 12px;
-            width: 130px;
-        }
-        .history-filter-sum {
+        
+        /* Кастомный календарь */
+        .custom-datetime {
             display: flex;
             align-items: center;
             gap: 6px;
             background: var(--card-bg);
-            padding: 3px 12px;
-            border-radius: 20px;
+            padding: 4px 12px;
+            border-radius: 30px;
             border: 1px solid var(--border-color);
         }
-        .history-filter-sum span {
+        .custom-datetime input {
+            background: transparent;
+            border: none;
+            padding: 6px 0;
+            font-size: 12px;
+            color: var(--text-primary);
+            outline: none;
+            width: 150px;
+        }
+        .custom-datetime input::-webkit-calendar-picker-indicator {
+            filter: var(--calendar-icon-filter, none);
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .custom-datetime input::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+        
+        /* Фильтр по сумме (диапазон) */
+        .price-range-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--card-bg);
+            padding: 4px 12px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+        }
+        .price-range-filter span {
             font-size: 12px;
             color: var(--text-secondary);
         }
-        .history-filter-sum input {
-            width: 70px;
-            padding: 4px 6px;
-            border-radius: 20px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
+        .price-range-filter input {
+            background: transparent;
+            border: none;
+            padding: 6px 0;
+            font-size: 12px;
             color: var(--text-primary);
+            outline: none;
+            width: 70px;
+            text-align: center;
+        }
+        .price-range-filter input::placeholder {
+            color: var(--text-muted);
+        }
+        .price-range-separator {
+            color: var(--text-muted);
             font-size: 12px;
         }
         
@@ -794,9 +842,8 @@
             .price-step-btn { width: 38px; height: 38px; font-size: 16px; }
             .modal-content { width: calc(100% - 30px); margin: 15px auto; }
             .modal-close-btn { top: 10px; right: 12px; width: 32px; height: 32px; font-size: 18px; }
-            .history-filter-input { width: 100px; }
-            .history-filter-group { gap: 6px; }
-            .history-filter-btn { padding: 5px 10px; font-size: 11px; }
+            .custom-datetime input { width: 120px; }
+            .price-range-filter input { width: 55px; }
         }
     </style>
 </head>
@@ -921,20 +968,32 @@
                 <span>📜 История операций</span>
             </div>
             <div class="history-filters">
-                <div class="history-filter-group">
-                    <button class="history-filter-btn" data-filter="all" onclick="setHistoryTypeFilter('all')">Все</button>
-                    <button class="history-filter-btn" data-filter="basket" onclick="setHistoryTypeFilter('basket')">Корзина</button>
-                    <button class="history-filter-btn" data-filter="single" onclick="setHistoryTypeFilter('single')">Поштучно</button>
-                    <button class="history-filter-btn" data-filter="sale" onclick="setHistoryTypeFilter('sale')">Продажи</button>
-                    <button class="history-filter-btn" data-filter="return" onclick="setHistoryTypeFilter('return')">Возвраты</button>
+                <div class="history-filter-row">
+                    <div class="history-filter-group">
+                        <span class="history-filter-label">📋 Тип:</span>
+                        <button class="history-filter-btn" data-filter="all" onclick="setHistoryTypeFilter('all')">Все</button>
+                        <button class="history-filter-btn" data-filter="basket" onclick="setHistoryTypeFilter('basket')">Корзина</button>
+                        <button class="history-filter-btn" data-filter="single" onclick="setHistoryTypeFilter('single')">Поштучно</button>
+                        <button class="history-filter-btn" data-filter="sale" onclick="setHistoryTypeFilter('sale')">Продажи</button>
+                        <button class="history-filter-btn" data-filter="return" onclick="setHistoryTypeFilter('return')">Возвраты</button>
+                    </div>
                 </div>
-                <div class="history-filter-group">
-                    <input type="date" id="historyDateFrom" class="history-filter-input" placeholder="с">
-                    <input type="date" id="historyDateTo" class="history-filter-input" placeholder="по">
-                </div>
-                <div class="history-filter-sum">
-                    <span>💰 от</span>
-                    <input type="number" id="historyMinSum" placeholder="0" value="0">
+                <div class="history-filter-row">
+                    <div class="custom-datetime">
+                        <span class="history-filter-label">📅 с</span>
+                        <input type="datetime-local" id="historyDateTimeFrom" step="1">
+                    </div>
+                    <div class="custom-datetime">
+                        <span class="history-filter-label">по</span>
+                        <input type="datetime-local" id="historyDateTimeTo" step="1">
+                    </div>
+                    <div class="price-range-filter">
+                        <span>💰 от</span>
+                        <input type="number" id="historyMinPrice" placeholder="0" value="0">
+                        <span class="price-range-separator">—</span>
+                        <span>до</span>
+                        <input type="number" id="historyMaxPrice" placeholder="∞">
+                    </div>
                 </div>
             </div>
             <div id="history-list">
@@ -1022,9 +1081,10 @@
             const container = document.getElementById('history-list');
             if (!container) return;
             
-            const dateFrom = document.getElementById('historyDateFrom')?.value;
-            const dateTo = document.getElementById('historyDateTo')?.value;
-            const minSum = parseInt(document.getElementById('historyMinSum')?.value) || 0;
+            const dateTimeFrom = document.getElementById('historyDateTimeFrom')?.value;
+            const dateTimeTo = document.getElementById('historyDateTimeTo')?.value;
+            const minPrice = parseInt(document.getElementById('historyMinPrice')?.value) || 0;
+            const maxPrice = parseInt(document.getElementById('historyMaxPrice')?.value) || Infinity;
             
             let filtered = [...salesHistory];
             
@@ -1039,22 +1099,18 @@
                 filtered = filtered.filter(e => e.isReturn === true);
             }
             
-            // Фильтр по дате
-            if (dateFrom) {
-                const fromDate = new Date(dateFrom);
-                fromDate.setHours(0, 0, 0, 0);
+            // Фильтр по дате и времени
+            if (dateTimeFrom) {
+                const fromDate = new Date(dateTimeFrom);
                 filtered = filtered.filter(e => new Date(e.date) >= fromDate);
             }
-            if (dateTo) {
-                const toDate = new Date(dateTo);
-                toDate.setHours(23, 59, 59, 999);
+            if (dateTimeTo) {
+                const toDate = new Date(dateTimeTo);
                 filtered = filtered.filter(e => new Date(e.date) <= toDate);
             }
             
-            // Фильтр по сумме
-            if (minSum > 0) {
-                filtered = filtered.filter(e => e.total >= minSum);
-            }
+            // Фильтр по диапазону цен
+            filtered = filtered.filter(e => e.total >= minPrice && e.total <= maxPrice);
             
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="empty-cart">🍌 История пуста</div>';
@@ -2082,9 +2138,10 @@
             if (event.target === document.getElementById('rulesModal')) closeRulesModal();
         }
         
-        document.getElementById('historyDateFrom')?.addEventListener('change', () => renderHistoryList());
-        document.getElementById('historyDateTo')?.addEventListener('change', () => renderHistoryList());
-        document.getElementById('historyMinSum')?.addEventListener('input', () => renderHistoryList());
+        document.getElementById('historyDateTimeFrom')?.addEventListener('change', () => renderHistoryList());
+        document.getElementById('historyDateTimeTo')?.addEventListener('change', () => renderHistoryList());
+        document.getElementById('historyMinPrice')?.addEventListener('input', () => renderHistoryList());
+        document.getElementById('historyMaxPrice')?.addEventListener('input', () => renderHistoryList());
         
         function startAutoRefresh() { if (autoRefreshInterval) clearInterval(autoRefreshInterval); autoRefreshInterval = setInterval(() => { loadData(false, true); }, 60000); }
         
