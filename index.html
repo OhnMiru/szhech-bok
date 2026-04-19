@@ -555,31 +555,33 @@
         }
         .history-filter-block {
             background: var(--card-bg);
-            border-radius: 30px;
-            padding: 6px 8px;
+            border-radius: 40px;
+            padding: 4px;
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
             border: 1px solid var(--border-color);
         }
         .history-filter-label {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-secondary);
             font-weight: 500;
-            padding: 0 8px;
+            padding: 0 12px;
             display: flex;
             align-items: center;
+            white-space: nowrap;
         }
         .history-filter-btn {
-            padding: 6px 14px;
-            border-radius: 25px;
+            padding: 8px 18px;
+            border-radius: 32px;
             border: none;
             background: transparent;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-primary);
             transition: all 0.2s;
             white-space: nowrap;
+            font-weight: 500;
         }
         .history-filter-btn:hover {
             background: var(--badge-bg);
@@ -590,36 +592,51 @@
         }
 
         /* Кастомное поле даты и времени */
-        .custom-datetime {
+        .datetime-wrapper {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             background: var(--card-bg);
-            padding: 4px 12px;
-            border-radius: 30px;
+            padding: 4px 16px;
+            border-radius: 40px;
             border: 1px solid var(--border-color);
         }
-        .custom-datetime span {
-            font-size: 12px;
+        .datetime-wrapper .label {
+            font-size: 13px;
             color: var(--text-secondary);
+            font-weight: 500;
         }
-        .custom-datetime input {
+        .datetime-input {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--badge-bg);
+            border-radius: 32px;
+            padding: 4px 12px;
+        }
+        .datetime-input input {
             background: transparent;
             border: none;
             padding: 8px 0;
             font-size: 13px;
             color: var(--text-primary);
             outline: none;
-            width: 140px;
+            width: 130px;
             font-family: monospace;
+            cursor: pointer;
         }
-        .custom-datetime input::-webkit-calendar-picker-indicator {
+        .datetime-input input::-webkit-calendar-picker-indicator {
             filter: var(--calendar-icon-filter, none);
             cursor: pointer;
             opacity: 0.6;
+            padding: 4px;
         }
-        .custom-datetime input::-webkit-calendar-picker-indicator:hover {
+        .datetime-input input::-webkit-calendar-picker-indicator:hover {
             opacity: 1;
+        }
+        .datetime-input .icon {
+            font-size: 14px;
+            opacity: 0.6;
         }
 
         /* Фильтр по сумме с шагом 100 */
@@ -628,23 +645,25 @@
             align-items: center;
             gap: 8px;
             background: var(--card-bg);
-            padding: 4px 12px;
-            border-radius: 30px;
+            padding: 4px 16px;
+            border-radius: 40px;
             border: 1px solid var(--border-color);
         }
-        .price-range-filter span {
-            font-size: 12px;
+        .price-range-filter .label {
+            font-size: 13px;
             color: var(--text-secondary);
+            font-weight: 500;
         }
         .price-range-filter input {
-            background: transparent;
+            background: var(--badge-bg);
             border: none;
-            padding: 8px 0;
+            padding: 8px 12px;
             font-size: 13px;
             color: var(--text-primary);
             outline: none;
-            width: 70px;
+            width: 80px;
             text-align: center;
+            border-radius: 32px;
         }
         .price-range-filter input::-webkit-inner-spin-button,
         .price-range-filter input::-webkit-outer-spin-button {
@@ -652,7 +671,8 @@
         }
         .price-range-separator {
             color: var(--text-muted);
-            font-size: 12px;
+            font-size: 14px;
+            font-weight: 500;
         }
         
         .login-card { background: var(--card-bg); border: 2px solid var(--border-color); }
