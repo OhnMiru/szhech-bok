@@ -101,7 +101,6 @@
             transition: background 0.3s ease, color 0.2s ease;
         }
         
-        /* Шапка с кнопкой темы на одном уровне */
         .header-row {
             display: flex;
             align-items: center;
@@ -122,7 +121,6 @@
             font-size: 13px;
         }
         
-        /* Кнопка смены темы */
         .theme-toggle {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -140,7 +138,6 @@
         }
         .theme-toggle:active { transform: scale(0.95); }
         
-        /* Toast уведомление */
         .toast-notification {
             position: fixed;
             top: 70px;
@@ -170,7 +167,6 @@
             to { opacity: 0; transform: translateX(100%); }
         }
         
-        /* КНОПКА КОРЗИНЫ */
         .cart-fab {
             position: fixed;
             bottom: 80px;
@@ -248,7 +244,6 @@
             z-index: 10;
         }
         
-        /* Стиль для мультиселекта типов */
         .type-select-list {
             max-height: 250px;
             overflow-y: auto;
@@ -308,7 +303,6 @@
             color: white;
         }
         
-        /* Стили для сортировки */
         .sort-option {
             padding: 10px 12px;
             cursor: pointer;
@@ -340,7 +334,6 @@
         }
         .reset-btn:active { transform: scale(0.96); }
         
-        /* Карточка товара */
         .card {
             background: var(--card-bg);
             border-radius: 14px;
@@ -359,7 +352,6 @@
             background: var(--out-of-stock-bg);
         }
         
-        /* Бейдж с количеством в корзине */
         .cart-qty-badge {
             position: absolute;
             top: 8px;
@@ -378,7 +370,6 @@
         .info { flex: 3; min-width: 120px; padding-right: 50px; }
         .title-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
         
-        /* Цветные бейджи для типов */
         .type-badge {
             display: inline-block;
             padding: 2px 8px;
@@ -451,7 +442,6 @@
             100% { opacity: 0.3; transform: scale(0.8); }
         }
         
-        /* Модальные окна */
         .modal {
             display: none;
             position: fixed;
@@ -509,7 +499,6 @@
             clear: both;
         }
         
-        /* История */
         .history-item { 
             border-bottom: 1px solid var(--border-color); 
             padding: 12px 0;
@@ -567,7 +556,6 @@
             margin-left: 8px;
         }
 
-        /* Стили для меток методов (Корзина/Поштучно) */
         .history-badge-method-basket {
             background: rgba(52, 152, 219, 0.7); 
             color: white;
@@ -576,7 +564,6 @@
             background: rgba(155, 89, 182, 0.7);
             color: white;
         }
-        /* Стили для меток типов (Продажа/Возврат) */
         .history-badge-type-sale {
             background: rgba(46, 204, 113, 0.7); 
             color: white;
@@ -585,7 +572,6 @@
             background: rgba(231, 76, 60, 0.7);
             color: white;
         }
-        /* Для тёмной темы - чуть ярче */
         body.dark .history-badge-method-basket {
             background: rgba(52, 152, 219, 0.4); 
             color: white;
@@ -619,7 +605,6 @@
             color: white;
         }
         
-        /* ========== ФИЛЬТРЫ ИСТОРИИ ========== */
         .history-filters {
             display: flex;
             flex-direction: column;
@@ -679,7 +664,6 @@
             border-color: var(--btn-bg);
         }
         
-        /* Нижняя строка: фильтр суммы */
         .history-filter-bottom {
             display: flex;
             flex-direction: column;
@@ -694,7 +678,6 @@
             flex: 1;
         }
         
-        /* Отдельная строка для кнопки сброса */
         .history-filter-reset-row {
             display: flex;
             justify-content: flex-end;
@@ -719,7 +702,6 @@
             background: var(--badge-bg);
         }
 
-        /* Кастомные поля даты и времени */
         .custom-datetime {
             display: flex;
             align-items: center;
@@ -761,7 +743,6 @@
             font-size: 11px;
         }
 
-        /* Поля даты */
         .history-date-input {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -780,7 +761,6 @@
             opacity: 0.6;
         }
 
-        /* Блок суммы */
         .history-price-filter {
             display: flex;
             align-items: center;
@@ -821,7 +801,6 @@
         .login-card input { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-primary); }
         .login-card input::placeholder { color: var(--text-muted); }
         
-        /* Кастомные селекты для правил */
         .rule-custom-select { position: relative; width: 100%; margin-bottom: 12px; }
         .rule-custom-select-trigger {
             background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 30px;
@@ -842,7 +821,6 @@
         .rule-select-option { padding: 10px 14px; cursor: pointer; transition: background 0.1s; font-size: 13px; color: var(--text-primary); }
         .rule-select-option:hover { background: var(--badge-bg); }
         
-        /* Множественный выбор товаров */
         .multi-select-container {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -898,7 +876,6 @@
         }
         .rule-type-btn.active { background: var(--btn-bg); color: white; border-color: var(--btn-bg); }
         
-        /* Стили для корзины */
         .cart-modal .modal-content {
             max-width: 500px;
         }
@@ -944,7 +921,6 @@
         .cart-clear { flex: 1; background: var(--reset-bg); color: var(--reset-color); width: auto; padding: 12px; font-size: 14px; border-radius: 30px; border: none; cursor: pointer; }
         .empty-cart { text-align: center; padding: 40px; color: var(--text-muted); }
         
-        /* Правила в корзине */
         .rule-text-bold {
             font-weight: bold;
         }
@@ -952,7 +928,6 @@
             font-weight: normal;
         }
         
-        /* Стили для стрелочек в разделе "По сумме" */
         .price-control {
             display: flex;
             align-items: center;
@@ -1100,7 +1075,6 @@
         </div>
     </div>
 
-    <!-- Модалка корзины -->
     <div id="cartModal" class="modal cart-modal">
         <div class="modal-content">
             <button class="modal-close-btn" onclick="closeCartModal()">×</button>
@@ -1118,7 +1092,6 @@
         </div>
     </div>
 
-    <!-- Модалка правил -->
     <div id="rulesModal" class="modal">
         <div class="modal-content" style="max-width: 550px;">
             <button class="modal-close-btn" onclick="closeRulesModal()">×</button>
@@ -1145,7 +1118,6 @@
         </div>
     </div>
     
-    <!-- Модалка истории -->
     <div id="historyModal" class="modal">
         <div class="modal-content" style="max-width: 550px;">
             <button class="modal-close-btn" onclick="closeHistory()">×</button>
@@ -1219,7 +1191,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbx80BtKGQAnfarEfLhMNPEk4Li4YsUFAxFYwFNougyvxtvUSUqoO10Ko3BbuTjtPn86wA/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyh10WDfLb0ax6R-YO3parXrRV91BDAX8z_Zg0jVIfdF5wKCpfpDEtA6WA-wwineuvzlQ/exec";
         const CORRECT_PASSWORD = "банан";
         
         let originalCardsData = [];
@@ -1232,7 +1204,6 @@
         let currentSortBy = "none";
         let typeOptions = [];
         
-        // Цвета для типов мерча
         let typeColors = new Map();
         const colorPalette = [
             '#e67e22', '#f39c12', '#2ecc71', '#3498db', '#9b59b6', 
@@ -1247,7 +1218,7 @@
             return typeColors.get(type);
         }
         
-        // ========== ИСТОРИЯ С АВТОСИНХРОНИЗАЦИЕЙ ==========
+        // ========== ИСТОРИЯ ==========
         let salesHistory = [];
         let historyMethodFilter = "all";
         let historyTypeFilter = "all";
@@ -1317,14 +1288,7 @@
             };
             salesHistory.unshift(entry);
             if (salesHistory.length > 200) salesHistory = salesHistory.slice(0, 200);
-            saveHistoryToLocal();
-            // Отправляем на сервер
-            fetch(`${API_URL}?action=syncHistory&t=${Date.now()}`, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ history: salesHistory })
-            }).catch(e => console.error('Ошибка синхронизации:', e));
+            saveHistory();
             if (document.getElementById('historyModal')?.style.display === 'block') {
                 renderHistoryList();
             }
@@ -1359,12 +1323,11 @@
             renderHistoryList();
         }
 
-        // Автоматическая синхронизация истории с сервером (каждую минуту)
         function startHistoryAutoSync() {
             if (historySyncInterval) clearInterval(historySyncInterval);
             historySyncInterval = setInterval(async () => {
                 await loadHistoryFromServer();
-            }, 10000);
+            }, 60000);
         }
 
         function initDateTimeSelects() {
@@ -1592,7 +1555,19 @@
         let selectedProducts = new Set();
         let scrollPosition = 0;
         
-        function loadRules() {
+        async function loadRules() {
+            try {
+                const response = await fetch(`${API_URL}?action=getRules&t=${Date.now()}`);
+                const data = await response.json();
+                if (data && data.rules && data.rules.length > 0) {
+                    rulesList = data.rules;
+                    localStorage.setItem('merch_rules_structured', JSON.stringify(rulesList));
+                    return;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки правил с сервера:', error);
+            }
+            
             const saved = localStorage.getItem('merch_rules_structured');
             if (saved) {
                 rulesList = JSON.parse(saved);
@@ -1604,6 +1579,12 @@
         
         function saveRules() {
             localStorage.setItem('merch_rules_structured', JSON.stringify(rulesList));
+            fetch(`${API_URL}?action=syncRules&t=${Date.now()}`, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rules: rulesList })
+            }).catch(e => console.error('Ошибка синхронизации правил:', e));
         }
         
         function selectRuleType(type) {
