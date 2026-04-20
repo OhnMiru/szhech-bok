@@ -216,45 +216,89 @@
             font-size: 11px;
             color: var(--text-muted);
         }
-        .stats-section {
+        .extra-costs-section {
             margin-top: 20px;
-            margin-bottom: 16px;
+            border-top: 2px solid var(--border-color);
+            padding-top: 16px;
         }
-        .stats-section-title {
-            font-size: 15px;
-            font-weight: bold;
-            color: var(--badge-text);
-            margin-bottom: 12px;
-            padding-bottom: 6px;
-            border-bottom: 2px solid var(--border-color);
-        }
-        .stats-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-        .stats-table th,
-        .stats-table td {
-            padding: 8px 6px;
-            text-align: left;
+        .extra-cost-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
             border-bottom: 1px solid var(--border-color);
         }
-        .stats-table th {
-            font-weight: 600;
-            color: var(--text-secondary);
-            background: var(--badge-bg);
+        .extra-cost-name {
+            flex: 2;
+            font-size: 13px;
         }
-        .stats-table td {
-            color: var(--text-primary);
-        }
-        .stats-table .text-right {
+        .extra-cost-amount {
+            flex: 1;
             text-align: right;
+            font-weight: bold;
+            color: var(--price-color);
         }
-        .profit-positive {
-            color: var(--profit-positive);
+        .extra-cost-delete {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--minus-color);
+            width: 32px;
+            height: 32px;
+            padding: 0;
         }
-        .profit-negative {
-            color: var(--profit-negative);
+        .add-cost-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .add-cost-input {
+            flex: 2;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .add-cost-input-number {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .add-cost-btn {
+            background: var(--btn-bg);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            width: auto;
+            height: auto;
+        }
+        .total-expenses-block {
+            background: var(--btn-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .total-expenses-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+        }
+        .total-expenses-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.8);
+            margin-top: 4px;
         }
         .stats-summary {
             background: var(--btn-bg);
@@ -301,7 +345,6 @@
             .history-price-filter { width: 100%; justify-content: center; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .stats-card-value { font-size: 18px; }
-            .stats-table th, .stats-table td { font-size: 10px; padding: 6px 3px; }
         }
     </style>
 </head>
@@ -469,7 +512,8 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxiYlb0xJl74hvw2jqaXnQJMnrTd-CDTlDflquUud9bWgGMwikdsqxKUZuhdTS6UOG1wA/exec";
+        // ⚠️ ВСТАВЬТЕ ВАШ АКТУАЛЬНЫЙ URL СЮДА ⚠️
+        const API_URL = "https://script.google.com/macros/s/AKfycbzTy-EPlVQ5HYDbqCMdZ0fj10j5SzQ0EDJWmIjBhaBO_rKFaUZJIj4TQe9DZEcTd67aug/exec";
         const CORRECT_PASSWORD = "банан";
         
         let originalCardsData = [];
@@ -491,6 +535,76 @@
                 typeColors.set(type, colorPalette[index]);
             }
             return typeColors.get(type);
+        }
+        
+        // ========== ДОПОЛНИТЕЛЬНЫЕ РАСХОДЫ ==========
+        let extraCosts = [];
+        
+        async function syncExtraCostsToServer() {
+            try {
+                const data = encodeURIComponent(JSON.stringify(extraCosts));
+                await fetch(`${API_URL}?action=syncExtraCosts&data=${data}&t=${Date.now()}`);
+                console.log('Расходы синхронизированы с сервером');
+            } catch (error) {
+                console.error('Ошибка синхронизации расходов:', error);
+            }
+        }
+        
+        async function loadExtraCostsFromServer() {
+            try {
+                const response = await fetch(`${API_URL}?action=getExtraCosts&t=${Date.now()}`);
+                const data = await response.json();
+                if (data && data.costs) {
+                    extraCosts = data.costs;
+                    saveExtraCostsToLocal();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Ошибка загрузки расходов с сервера:', error);
+                return false;
+            }
+        }
+        
+        function saveExtraCostsToLocal() {
+            localStorage.setItem('merch_extra_costs', JSON.stringify(extraCosts));
+        }
+        
+        function loadExtraCostsFromLocal() {
+            const saved = localStorage.getItem('merch_extra_costs');
+            if (saved) {
+                extraCosts = JSON.parse(saved);
+            } else {
+                extraCosts = [];
+            }
+        }
+        
+        async function loadExtraCosts() {
+            const loaded = await loadExtraCostsFromServer();
+            if (!loaded) {
+                loadExtraCostsFromLocal();
+            }
+        }
+        
+        function saveExtraCosts() {
+            saveExtraCostsToLocal();
+            syncExtraCostsToServer();
+        }
+        
+        function addExtraCost(name, amount) {
+            extraCosts.push({ id: Date.now(), name: name, amount: amount });
+            saveExtraCosts();
+            if (document.getElementById('statsModal')?.style.display === 'block') {
+                renderStats();
+            }
+        }
+        
+        function deleteExtraCost(index) {
+            extraCosts.splice(index, 1);
+            saveExtraCosts();
+            if (document.getElementById('statsModal')?.style.display === 'block') {
+                renderStats();
+            }
         }
         
         // ========== ИСТОРИЯ ==========
@@ -1158,178 +1272,99 @@
             // Только продажи (не возвраты)
             const sales = salesHistory.filter(entry => !entry.isReturn);
             
-            if (sales.length === 0) {
-                container.innerHTML = '<div class="empty-cart">📊 Нет данных для статистики</div>';
-                return;
-            }
-            
-            // Получаем себестоимость из originalCardsData (столбец F)
-            const costMap = {};
-            originalCardsData.forEach(card => {
-                costMap[card.name] = card.cost || 0;
-            });
-            
-            // Собираем данные по товарам
-            const productStats = {};
+            // Выручка от продаж
             let totalRevenue = 0;
-            let totalCost = 0;
-            let totalItems = 0;
-            let orderCount = sales.length;
-            
             for (const sale of sales) {
-                let saleRevenue = 0;
-                let saleCost = 0;
-                let saleItems = 0;
-                
                 for (const item of sale.items) {
-                    const itemRevenue = item.qty * item.price;
-                    const itemCost = (costMap[item.name] || 0) * item.qty;
-                    
-                    saleRevenue += itemRevenue;
-                    saleCost += itemCost;
-                    saleItems += item.qty;
-                    
-                    if (!productStats[item.name]) {
-                        const card = originalCardsData.find(c => c.name === item.name);
-                        productStats[item.name] = {
-                            type: card?.type || "Другое",
-                            qty: 0,
-                            revenue: 0,
-                            cost: 0
-                        };
-                    }
-                    productStats[item.name].qty += item.qty;
-                    productStats[item.name].revenue += itemRevenue;
-                    productStats[item.name].cost += itemCost;
+                    totalRevenue += item.qty * item.price;
                 }
-                
-                totalRevenue += saleRevenue;
-                totalCost += saleCost;
-                totalItems += saleItems;
             }
             
-            const totalProfit = totalRevenue - totalCost;
-            const averageCheck = orderCount > 0 ? totalRevenue / orderCount : 0;
-            const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
-            
-            // Собираем данные по типам
-            const typeStats = {};
-            for (const [name, data] of Object.entries(productStats)) {
-                if (!typeStats[data.type]) {
-                    typeStats[data.type] = { qty: 0, revenue: 0, cost: 0 };
-                }
-                typeStats[data.type].qty += data.qty;
-                typeStats[data.type].revenue += data.revenue;
-                typeStats[data.type].cost += data.cost;
+            // Себестоимость ВСЕГО товара (не только проданного)
+            let totalCostAllGoods = 0;
+            for (const card of originalCardsData) {
+                totalCostAllGoods += (card.cost || 0) * (card.total || 0);
             }
             
-            // Сортируем товары по рентабельности
-            const sortedProducts = Object.entries(productStats)
-                .map(([name, data]) => ({
-                    name,
-                    type: data.type,
-                    qty: data.qty,
-                    revenue: data.revenue,
-                    cost: data.cost,
-                    profit: data.revenue - data.cost,
-                    margin: data.revenue > 0 ? ((data.revenue - data.cost) / data.revenue * 100) : 0
-                }))
-                .sort((a, b) => b.margin - a.margin);
+            // Сумма дополнительных расходов
+            const totalExtraCosts = extraCosts.reduce((sum, cost) => sum + (cost.amount || 0), 0);
             
-            // Сортируем типы по рентабельности
-            const sortedTypes = Object.entries(typeStats)
-                .map(([type, data]) => ({
-                    type,
-                    qty: data.qty,
-                    revenue: data.revenue,
-                    cost: data.cost,
-                    profit: data.revenue - data.cost,
-                    margin: data.revenue > 0 ? ((data.revenue - data.cost) / data.revenue * 100) : 0
-                }))
-                .sort((a, b) => b.margin - a.margin);
+            // Общие затраты = себестоимость всего товара + доп расходы
+            const totalExpenses = totalCostAllGoods + totalExtraCosts;
+            
+            // Чистая прибыль
+            const netProfit = totalRevenue - totalExpenses;
+            
+            // Рентабельность
+            const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue * 100) : 0;
             
             const formatCurrency = (value) => value.toLocaleString('ru-RU') + ' ₽';
-            const formatNumber = (value) => value.toLocaleString('ru-RU');
             const formatPercent = (value) => value.toFixed(1) + '%';
             
             let html = `
                 <div class="stats-grid">
                     <div class="stats-card">
                         <div class="stats-card-value">${formatCurrency(totalRevenue)}</div>
-                        <div class="stats-card-label">💰 Общая выручка</div>
+                        <div class="stats-card-label">💰 Выручка</div>
                     </div>
                     <div class="stats-card">
-                        <div class="stats-card-value">${formatCurrency(totalCost)}</div>
-                        <div class="stats-card-label">📦 Себестоимость</div>
+                        <div class="stats-card-value">${formatCurrency(totalCostAllGoods)}</div>
+                        <div class="stats-card-label">📦 Себестоимость всего товара</div>
                     </div>
                     <div class="stats-card">
-                        <div class="stats-card-value ${totalProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(totalProfit)}</div>
+                        <div class="stats-card-value">${formatCurrency(totalExtraCosts)}</div>
+                        <div class="stats-card-label">➕ Дополнительные расходы</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-value">${formatCurrency(totalExpenses)}</div>
+                        <div class="stats-card-label">📉 Общие затраты</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-value ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(netProfit)}</div>
                         <div class="stats-card-label">📈 Чистая прибыль</div>
                     </div>
                     <div class="stats-card">
-                        <div class="stats-card-value">${formatNumber(totalItems)}</div>
-                        <div class="stats-card-label">📊 Продано единиц</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value">${formatNumber(orderCount)}</div>
-                        <div class="stats-card-label">🛒 Количество заказов</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value">${formatCurrency(averageCheck)}</div>
-                        <div class="stats-card-label">💳 Средний чек</div>
+                        <div class="stats-card-value ${profitMargin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(profitMargin)}</div>
+                        <div class="stats-card-label">📊 Рентабельность</div>
                     </div>
                 </div>
                 
-                <div class="stats-summary">
-                    <div class="stats-summary-value ${profitMargin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(profitMargin)}</div>
-                    <div class="stats-summary-label">Рентабельность продаж</div>
-                </div>
-                
-                <div class="stats-section">
-                    <div class="stats-section-title">📦 Детализация по товарам (сортировка по рентабельности)</div>
-                    <table class="stats-table">
-                        <thead>
-                            <tr><th>Товар</th><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr>
-                        </thead>
-                        <tbody>
-                            ${sortedProducts.map(p => `
-                                <tr>
-                                    <td>${escapeHtml(p.name)}</td>
-                                    <td><span class="type-badge" style="background:${getTypeColor(p.type)}20; color:${getTypeColor(p.type)};">${escapeHtml(p.type)}</span></td>
-                                    <td class="text-right">${p.qty} шт</td>
-                                    <td class="text-right">${formatCurrency(p.revenue)}</td>
-                                    <td class="text-right">${formatCurrency(p.cost)}</td>
-                                    <td class="text-right ${p.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(p.profit)}</td>
-                                    <td class="text-right ${p.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(p.margin)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div class="stats-section">
-                    <div class="stats-section-title">🏷️ Детализация по типам мерча (сортировка по рентабельности)</div>
-                    <table class="stats-table">
-                        <thead>
-                            <tr><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr>
-                        </thead>
-                        <tbody>
-                            ${sortedTypes.map(t => `
-                                <tr>
-                                    <td><span class="type-badge" style="background:${getTypeColor(t.type)}20; color:${getTypeColor(t.type)};">${escapeHtml(t.type)}</span></td>
-                                    <td class="text-right">${t.qty} шт</td>
-                                    <td class="text-right">${formatCurrency(t.revenue)}</td>
-                                    <td class="text-right">${formatCurrency(t.cost)}</td>
-                                    <td class="text-right ${t.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(t.profit)}</td>
-                                    <td class="text-right ${t.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(t.margin)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                <div class="extra-costs-section">
+                    <div class="stats-section-title">➕ Дополнительные расходы</div>
+                    <div id="extra-costs-list">
+                        ${extraCosts.length === 0 ? '<div style="color: var(--text-muted); text-align: center; padding: 12px;">Нет дополнительных расходов</div>' : ''}
+                        ${extraCosts.map((cost, idx) => `
+                            <div class="extra-cost-item">
+                                <span class="extra-cost-name">${escapeHtml(cost.name)}</span>
+                                <span class="extra-cost-amount">${cost.amount} ₽</span>
+                                <button class="extra-cost-delete" onclick="deleteExtraCost(${idx})">🗑</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="add-cost-form">
+                        <input type="text" id="newCostName" class="add-cost-input" placeholder="Название (стол, доставка...)" autocomplete="off">
+                        <input type="number" id="newCostAmount" class="add-cost-input-number" placeholder="Сумма" value="0" step="100">
+                        <button class="add-cost-btn" onclick="addExtraCostFromModal()">➕ Добавить</button>
+                    </div>
                 </div>
             `;
             
             container.innerHTML = html;
+        }
+        
+        function addExtraCostFromModal() {
+            const nameInput = document.getElementById('newCostName');
+            const amountInput = document.getElementById('newCostAmount');
+            const name = nameInput?.value.trim();
+            const amount = parseFloat(amountInput?.value);
+            if (!name || isNaN(amount) || amount <= 0) {
+                showToast("Введите название и сумму расхода", false);
+                return;
+            }
+            addExtraCost(name, amount);
+            if (nameInput) nameInput.value = '';
+            if (amountInput) amountInput.value = '0';
+            renderStats();
         }
         
         // ========== КОРЗИНА ==========
@@ -1969,6 +2004,7 @@
                 initCustomSelects();
                 loadRules();
                 loadHistory();
+                loadExtraCosts();
                 initDateTimeSelects();
                 bindDateTimeEvents();
                 loadData(true, true);
@@ -1986,6 +2022,7 @@
                 initCustomSelects();
                 loadRules();
                 loadHistory();
+                loadExtraCosts();
                 initDateTimeSelects();
                 bindDateTimeEvents();
                 loadData(true, true);
