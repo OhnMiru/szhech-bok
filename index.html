@@ -37,7 +37,6 @@
             --profit-positive: #27ae60; --profit-negative: #e74c3c;
             --extra-costs-text-light: #f5e6c4;
             --extra-costs-text-dark: #ffffff;
-            --detail-table: #fff0d0;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); margin: 0; padding: 12px; padding-bottom: 70px; transition: background 0.3s ease; }
         .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
@@ -100,7 +99,7 @@
         .total { color: var(--text-muted); }
         .price { color: var(--price-color); }
         .buttons { display: flex; gap: 8px; align-items: center; }
-        button { font-size: 24px; font-weight: bold; width: 54px; height: 54px; border-radius: 27px; border: none; cursor: pointer; transition: 0.1s; box-shadow: 0 1px 3px var(--shadow); }
+        button { font-size: 24px; font-weight: bold; width: 54px; height: 54px; border-radius: 27px; border: none; cursor: pointer; transition: 0.1s; box-shadow: 0 1px 3px var(--shadow); display: inline-flex; align-items: center; justify-content: center; }
         button:active { transform: scale(0.96); }
         .minus { background: var(--minus-bg); color: var(--minus-color); }
         .plus { background: var(--plus-bg); color: var(--plus-color); }
@@ -191,10 +190,10 @@
         .cart-item-name { font-weight: bold; font-size: 16px; color: var(--text-primary); }
         .cart-item-price { font-size: 12px; color: var(--price-color); }
         .cart-item-quantity { display: flex; align-items: center; gap: 10px; }
-        .cart-qty-btn { width: 32px; height: 32px; font-size: 18px; border-radius: 16px; background: var(--badge-bg); color: var(--text-primary); border: none; cursor: pointer; }
+        .cart-qty-btn { width: 32px; height: 32px; font-size: 18px; border-radius: 16px; background: var(--badge-bg); color: var(--text-primary); border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
         .cart-qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .cart-item-qty { font-weight: bold; min-width: 30px; text-align: center; font-size: 16px; color: var(--text-primary); }
-        .cart-item-remove { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--minus-color); width: 36px; height: 36px; box-shadow: none; }
+        .cart-item-remove { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--minus-color); width: 36px; height: 36px; box-shadow: none; display: inline-flex; align-items: center; justify-content: center; }
         .cart-total { padding: 16px; font-size: 20px; font-weight: bold; text-align: right; border-top: 2px solid var(--border-color); color: var(--stock-color); }
         .cart-actions { display: flex; gap: 12px; padding: 16px; }
         .cart-checkout { flex: 2; background: var(--btn-bg); color: white; width: auto; padding: 12px; font-size: 16px; border-radius: 30px; border: none; cursor: pointer; }
@@ -386,6 +385,73 @@
             margin-top: 20px;
         }
         
+        /* Стили для скидок */
+        .discount-section {
+            background: var(--badge-bg);
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        .discount-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .discount-title {
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--badge-text);
+        }
+        .discount-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .discount-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .discount-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .item-discount {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding: 8px;
+            background: var(--card-bg);
+            border-radius: 12px;
+        }
+        .edit-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        .edit-btn {
+            background: var(--badge-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+        
         @media (min-width: 1024px) { .title-row { margin-bottom: 2px; } .name { font-size: 24px; } .stock { font-size: 22px; } .card { padding: 12px; } }
         @media (min-width: 768px) and (max-width: 1024px) { body { padding-bottom: 85px; } .footer { padding: 12px 20px; font-size: 13px; } .footer a { padding: 6px 8px; } }   
         @media (max-width: 500px) {
@@ -415,6 +481,28 @@
             .stats-card-value { font-size: 16px; }
             .detail-table th, .detail-table td { font-size: 10px; padding: 6px 3px; }
             .two-columns { grid-template-columns: 1fr; gap: 10px; }
+        }
+        
+        /* Цвета для тёмной темы статистики */
+        body.dark .stats-card-value,
+        body.dark .detail-table td,
+        body.dark .detail-table th,
+        body.dark .detail-title,
+        body.dark .stats-card-label,
+        body.dark .extra-cost-name,
+        body.dark .extra-cost-amount,
+        body.dark .discount-title,
+        body.dark .cart-item-name,
+        body.dark .cart-item-price,
+        body.dark .cart-total,
+        body.dark .cart-qty-btn {
+            color: #f5e6c4 !important;
+        }
+        body.dark .stats-card {
+            background: var(--card-bg);
+        }
+        body.dark .detail-table th {
+            background: var(--badge-bg);
         }
     </style>
 </head>
@@ -477,6 +565,7 @@
         <div class="modal-content">
             <button class="modal-close-btn" onclick="closeCartModal()">×</button>
             <div class="modal-header"><span>🛒 Корзина</span></div>
+            <div id="discount-panel" class="discount-section"></div>
             <div id="cart-items-list"><div class="empty-cart">Корзина пуста</div></div>
             <div id="cart-total" class="cart-total" style="display:none;">Итого: 0 ₽</div>
             <div class="cart-actions" id="cart-actions" style="display:none;">
@@ -494,6 +583,7 @@
                 <button class="rule-type-btn" data-type="type" onclick="selectRuleType('type')">📦 По типу</button>
                 <button class="rule-type-btn" data-type="product" onclick="selectRuleType('product')">🏷️ По товару</button>
                 <button class="rule-type-btn" data-type="price" onclick="selectRuleType('price')">💰 По сумме</button>
+                <button class="rule-type-btn" data-type="cashbonus" onclick="selectRuleType('cashbonus')">💵 Бонус за наличку</button>
             </div>
             <div id="ruleTypeContent"></div>
             <button onclick="addStructuredRule()" style="background: var(--btn-bg); color: white; width: 100%; padding: 12px; border-radius: 30px; border: none; font-size: 14px; margin-top: 8px; cursor: pointer;">➕ Добавить правило</button>
@@ -583,6 +673,30 @@
             </div>
         </div>
     </div>
+    
+    <!-- Модалка редактирования товара -->
+    <div id="editProductModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <button class="modal-close-btn" onclick="closeEditProductModal()">×</button>
+            <div class="modal-header">
+                <span>✏️ Редактирование товара</span>
+            </div>
+            <div id="edit-product-content">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">📦 Всего (поставка)</label>
+                    <input type="number" id="editTotal" class="rule-styled-input" style="margin-bottom: 10px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">📊 Остаток (списание/порча)</label>
+                    <input type="number" id="editStock" class="rule-styled-input" style="margin-bottom: 10px;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="saveProductChanges()" style="background: var(--btn-bg); color: white; border: none; border-radius: 30px; padding: 10px; flex: 1; cursor: pointer;">💾 Сохранить</button>
+                    <button onclick="closeEditProductModal()" style="background: var(--minus-bg); color: var(--minus-color); border: none; border-radius: 30px; padding: 10px; flex: 1; cursor: pointer;">❌ Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzTy-EPlVQ5HYDbqCMdZ0fj10j5SzQ0EDJWmIjBhaBO_rKFaUZJIj4TQe9DZEcTd67aug/exec";
@@ -593,10 +707,15 @@
         let isLoading = false;
         let autoRefreshInterval = null;
         let historySyncInterval = null;
+        let currentEditIndex = null;
         
         let selectedTypes = new Set();
         let currentSortBy = "none";
         let typeOptions = [];
+        
+        // Скидки
+        let cartDiscount = { type: 'none', value: 0 };
+        let itemDiscounts = {};
         
         let typeColors = new Map();
         const colorPalette = ['#e67e22', '#f39c12', '#2ecc71', '#3498db', '#9b59b6', '#e74c3c', '#1abc9c', '#f1c40f', '#e67e22', '#95a5a6'];
@@ -607,6 +726,109 @@
                 typeColors.set(type, colorPalette[index]);
             }
             return typeColors.get(type);
+        }
+        
+        // ========== РЕДАКТИРОВАНИЕ ТОВАРА ==========
+        function openEditProductModal(index) {
+            currentEditIndex = index;
+            const card = originalCardsData[index];
+            if (card) {
+                document.getElementById('editTotal').value = card.total;
+                document.getElementById('editStock').value = card.stock;
+                document.getElementById('editProductModal').style.display = 'block';
+            }
+        }
+        
+        function closeEditProductModal() {
+            document.getElementById('editProductModal').style.display = 'none';
+            currentEditIndex = null;
+        }
+        
+        async function saveProductChanges() {
+            if (currentEditIndex === null) return;
+            const card = originalCardsData[currentEditIndex];
+            const newTotal = parseInt(document.getElementById('editTotal').value);
+            const newStock = parseInt(document.getElementById('editStock').value);
+            
+            if (isNaN(newTotal) || isNaN(newStock) || newTotal < 0 || newStock < 0 || newStock > newTotal) {
+                showToast("Некорректные значения", false);
+                return;
+            }
+            
+            const deltaTotal = newTotal - card.total;
+            const deltaStock = newStock - card.stock;
+            
+            card.total = newTotal;
+            card.stock = newStock;
+            
+            // Обновляем выручку
+            const sold = card.total - card.stock;
+            card.revenue = sold * card.price;
+            
+            filterAndSort();
+            
+            // Отправляем изменения на сервер
+            try {
+                // Обновляем остаток
+                await fetch(`${API_URL}?action=update&row=${currentEditIndex}&delta=${deltaStock}&t=${Date.now()}`);
+                // Обновляем общее количество (через специальный эндпоинт)
+                await fetch(`${API_URL}?action=updateTotal&row=${currentEditIndex}&newTotal=${newTotal}&t=${Date.now()}`);
+            } catch (error) {
+                console.error('Ошибка синхронизации:', error);
+            }
+            
+            closeEditProductModal();
+            showToast(`Товар "${card.name}" обновлён`, true);
+        }
+        
+        // ========== СКИДКИ ==========
+        function updateCartWithDiscounts() {
+            updateCartUI();
+        }
+        
+        function applyCartDiscount(type, value) {
+            cartDiscount = { type, value };
+            updateCartUI();
+        }
+        
+        function applyItemDiscount(index, type, value) {
+            if (!itemDiscounts[index]) itemDiscounts[index] = {};
+            itemDiscounts[index] = { type, value };
+            updateCartUI();
+        }
+        
+        function removeItemDiscount(index) {
+            delete itemDiscounts[index];
+            updateCartUI();
+        }
+        
+        function getDiscountedPrice(originalPrice, qty, itemIndex, cartTotal) {
+            let price = originalPrice;
+            
+            // Сначала применяем скидку на товар
+            if (itemDiscounts[itemIndex]) {
+                const disc = itemDiscounts[itemIndex];
+                if (disc.type === 'percent') {
+                    price = originalPrice * (1 - disc.value / 100);
+                } else if (disc.type === 'fixed') {
+                    price = originalPrice - disc.value;
+                    if (price < 0) price = 0;
+                }
+            }
+            
+            let itemTotal = price * qty;
+            
+            // Затем применяем скидку на всю корзину (пропорционально)
+            if (cartDiscount.type === 'percent' && cartDiscount.value > 0) {
+                itemTotal = itemTotal * (1 - cartDiscount.value / 100);
+            } else if (cartDiscount.type === 'fixed' && cartDiscount.value > 0 && cartTotal > 0) {
+                // Пропорциональное распределение фиксированной скидки
+                const ratio = (originalPrice * qty) / cartTotal;
+                itemTotal = itemTotal - (cartDiscount.value * ratio);
+                if (itemTotal < 0) itemTotal = 0;
+            }
+            
+            return itemTotal / qty;
         }
         
         // ========== ДОПОЛНИТЕЛЬНЫЕ РАСХОДЫ ==========
@@ -1147,6 +1369,7 @@
             const container = document.getElementById('ruleTypeContent');
             if (!container) return;
             const types = [...new Set(originalCardsData.map(c => c.type).filter(t => t && t.trim()))];
+            
             if (currentRuleType === 'type') {
                 const typesHtml = types.map(t => `<div class="rule-select-option" onclick="selectRuleOption('ruleTypeSelect', '${escapeHtml(t)}', '${escapeHtml(t)}')">${escapeHtml(t)}</div>`).join('');
                 container.innerHTML = `
@@ -1176,11 +1399,28 @@
                 `;
                 const priceInput = document.getElementById('rulePriceMin');
                 if (priceInput && !priceInput.value) priceInput.value = 1000;
+            } else if (currentRuleType === 'cashbonus') {
+                // Правило "Бонус за наличку"
+                const cashBonusRule = rulesList.find(r => r.type === 'cashbonus');
+                const isActive = cashBonusRule ? cashBonusRule.active : false;
+                const message = cashBonusRule ? cashBonusRule.message : "Бонус за наличку: +1 стикер";
+                
+                container.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <input type="checkbox" id="cashBonusActive" ${isActive ? 'checked' : ''}> 
+                            <span>Активировать правило</span>
+                        </label>
+                    </div>
+                    <input type="text" id="cashBonusMessage" class="rule-styled-input" placeholder="Текст правила" value="${escapeHtml(message)}">
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">💡 Это правило всегда показывается в корзине, если активно</div>
+                `;
             }
         }
         
         function addStructuredRule() {
             let newRule = null;
+            
             if (currentRuleType === 'type') {
                 const typeName = document.getElementById('ruleTypeSelect')?.value;
                 const minQty = parseInt(document.getElementById('ruleTypeQty')?.value);
@@ -1189,7 +1429,7 @@
                     showToast("Заполните все поля", false);
                     return;
                 }
-                newRule = { type: "type", condition: { typeName, minQty }, message, icon: "📦" };
+                newRule = { type: "type", condition: { typeName, minQty }, message, icon: "📦", active: true };
             } else if (currentRuleType === 'product') {
                 const productNames = Array.from(selectedProducts);
                 const minQty = parseInt(document.getElementById('ruleProductQty')?.value);
@@ -1198,7 +1438,7 @@
                     showToast("Выберите хотя бы один товар и заполните все поля", false);
                     return;
                 }
-                newRule = { type: "product", condition: { productNames, minQty }, message, icon: "🏷️" };
+                newRule = { type: "product", condition: { productNames, minQty }, message, icon: "🏷️", active: true };
             } else if (currentRuleType === 'price') {
                 const minSum = parseInt(document.getElementById('rulePriceMin')?.value);
                 const message = document.getElementById('rulePriceMessage')?.value.trim();
@@ -1206,8 +1446,27 @@
                     showToast("Заполните все поля", false);
                     return;
                 }
-                newRule = { type: "price", condition: { minSum }, message, icon: "💰" };
+                newRule = { type: "price", condition: { minSum }, message, icon: "💰", active: true };
+            } else if (currentRuleType === 'cashbonus') {
+                const active = document.getElementById('cashBonusActive')?.checked || false;
+                const message = document.getElementById('cashBonusMessage')?.value.trim() || "Бонус за наличку: +1 стикер";
+                
+                // Обновляем существующее правило или создаём новое
+                const existingIndex = rulesList.findIndex(r => r.type === 'cashbonus');
+                if (existingIndex !== -1) {
+                    rulesList[existingIndex].active = active;
+                    rulesList[existingIndex].message = message;
+                    saveRules();
+                    renderRulesList();
+                    showToast("Правило обновлено ✅", true);
+                    renderRuleForm();
+                    updateCartUI();
+                    return;
+                } else {
+                    newRule = { type: "cashbonus", message: message, icon: "💵", active: active };
+                }
             }
+            
             if (newRule) {
                 rulesList.push(newRule);
                 saveRules();
@@ -1243,20 +1502,38 @@
             let html = '';
             rulesList.forEach((rule, index) => {
                 let conditionText = '';
-                if (rule.type === 'type') conditionText = `Тип: ${rule.condition.typeName}, от ${rule.condition.minQty} шт`;
-                else if (rule.type === 'product') {
+                let statusText = rule.active !== false ? '✅ Активно' : '❌ Неактивно';
+                if (rule.type === 'type') {
+                    conditionText = `Тип: ${rule.condition.typeName}, от ${rule.condition.minQty} шт`;
+                } else if (rule.type === 'product') {
                     const productsList = rule.condition.productNames.join(', ');
                     conditionText = `Товары: ${productsList.length > 30 ? productsList.substring(0, 30) + '...' : productsList}, от ${rule.condition.minQty} шт`;
-                } else if (rule.type === 'price') conditionText = `Сумма: от ${rule.condition.minSum} ₽`;
+                } else if (rule.type === 'price') {
+                    conditionText = `Сумма: от ${rule.condition.minSum} ₽`;
+                } else if (rule.type === 'cashbonus') {
+                    conditionText = `Всегда активно (при включении)`;
+                }
                 html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color);">
                             <div style="flex: 1;">
                                 <div style="font-size: 14px; font-weight: bold; color: var(--badge-text);">${rule.icon} ${escapeHtml(rule.message)}</div>
                                 <div style="font-size: 11px; color: var(--text-muted);">${conditionText}</div>
+                                <div style="font-size: 10px; color: ${rule.active !== false ? '#2ecc71' : '#e74c3c'};">${statusText}</div>
                             </div>
+                            ${rule.type !== 'cashbonus' ? `<button onclick="toggleRuleActive(${index})" style="background: none; border: none; font-size: 16px; cursor: pointer; width: 36px; height: 36px;">${rule.active !== false ? '🔘' : '⚪'}</button>` : ''}
                             <button onclick="deleteRule(${index})" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--minus-color); width: 36px; height: 36px; box-shadow: none;">🗑</button>
                         </div>`;
             });
             container.innerHTML = html;
+        }
+        
+        function toggleRuleActive(index) {
+            if (rulesList[index]) {
+                rulesList[index].active = rulesList[index].active === false ? true : false;
+                saveRules();
+                renderRulesList();
+                updateCartUI();
+                showToast(`Правило ${rulesList[index].active ? 'активировано' : 'деактивировано'}`, true);
+            }
         }
         
         function openRulesModal() {
@@ -1277,6 +1554,7 @@
             const cartItems = Object.entries(cart);
             if (cartItems.length === 0) return [];
             if (!originalCardsData.length) return [];
+            
             const cartInfo = {};
             let totalPrice = 0;
             for (const [idxStr, qty] of cartItems) {
@@ -1289,12 +1567,24 @@
                     totalPrice += qty * card.price;
                 }
             }
+            
             const typeQty = {};
             for (const [name, info] of Object.entries(cartInfo)) {
                 if (info.type) typeQty[info.type] = (typeQty[info.type] || 0) + info.qty;
             }
+            
             const activeRules = [];
+            
+            // Добавляем правило "Бонус за наличку", если оно активно
+            const cashBonusRule = rulesList.find(r => r.type === 'cashbonus' && r.active === true);
+            if (cashBonusRule) {
+                activeRules.push({ icon: cashBonusRule.icon || "💵", message: cashBonusRule.message, condition: "" });
+            }
+            
             for (const rule of rulesList) {
+                if (rule.type === 'cashbonus') continue; // Уже обработали
+                if (rule.active === false) continue;
+                
                 let isActive = false;
                 let detailText = "";
                 if (rule.type === 'type') {
@@ -1341,10 +1631,8 @@
             const container = document.getElementById('stats-content');
             if (!container) return;
             
-            // Только продажи (не возвраты)
             const sales = salesHistory.filter(entry => !entry.isReturn);
             
-            // Выручка от продаж
             let totalRevenue = 0;
             let totalItemsSold = 0;
             let orderCount = sales.length;
@@ -1358,28 +1646,18 @@
                 totalItemsSold += saleItems;
             }
             
-            // Средний чек
             const averageCheck = orderCount > 0 ? totalRevenue / orderCount : 0;
             
-            // Себестоимость ВСЕГО товара (не только проданного) - для детализации берём из карточек
             let totalCostAllGoods = 0;
             for (const card of originalCardsData) {
                 totalCostAllGoods += (card.cost || 0) * (card.total || 0);
             }
             
-            // Сумма дополнительных расходов
             const totalExtraCosts = extraCosts.reduce((sum, cost) => sum + (cost.amount || 0), 0);
-            
-            // Общие затраты = себестоимость всего товара + доп расходы
             const totalExpenses = totalCostAllGoods + totalExtraCosts;
-            
-            // Чистая прибыль
             const netProfit = totalRevenue - totalExpenses;
-            
-            // Рентабельность
             const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue * 100) : 0;
             
-            // Собираем данные для детализации по товарам и типам
             const productStats = {};
             const typeStats = {};
             
@@ -1388,16 +1666,10 @@
                     const card = originalCardsData.find(c => c.name === item.name);
                     const type = card?.type || "Другое";
                     const revenue = item.qty * item.price;
-                    // Себестоимость ВСЕГО товара (по карточке), а не только проданного
                     const totalCostForItem = (card?.cost || 0) * (card?.total || 0);
                     
                     if (!productStats[item.name]) {
-                        productStats[item.name] = { 
-                            type, 
-                            qty: 0, 
-                            revenue: 0, 
-                            totalCost: totalCostForItem  // себестоимость всего товара
-                        };
+                        productStats[item.name] = { type, qty: 0, revenue: 0, totalCost: totalCostForItem };
                     }
                     productStats[item.name].qty += item.qty;
                     productStats[item.name].revenue += revenue;
@@ -1411,7 +1683,6 @@
                 }
             }
             
-            // Детализация по товарам
             const productDetails = Object.entries(productStats)
                 .map(([name, data]) => ({
                     name,
@@ -1424,7 +1695,6 @@
                 }))
                 .sort((a, b) => b.margin - a.margin);
             
-            // Детализация по типам
             const typeDetails = Object.entries(typeStats)
                 .map(([type, data]) => ({
                     type,
@@ -1436,7 +1706,6 @@
                 }))
                 .sort((a, b) => b.margin - a.margin);
             
-            // Топ-5 по количеству продаж
             const topByQty = Object.entries(productStats)
                 .sort((a, b) => b[1].qty - a[1].qty)
                 .slice(0, 5);
@@ -1451,150 +1720,34 @@
             
             let html = `
                 <div class="stats-grid">
-                    <div class="stats-card">
-                        <div class="stats-card-value">${formatCurrency(totalRevenue)}</div>
-                        <div class="stats-card-label">💰 Выручка</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value">${formatCurrency(totalCostAllGoods)}</div>
-                        <div class="stats-card-label">📦 Себестоимость всего товара</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value">${formatCurrency(totalExtraCosts)}</div>
-                        <div class="stats-card-label">➕ Дополнительные расходы</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value">${formatCurrency(totalExpenses)}</div>
-                        <div class="stats-card-label">📉 Общие затраты</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value">${formatCurrency(netProfit)}</div>
-                        <div class="stats-card-label ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">📈 Чистая прибыль</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value">${formatNumber(totalItemsSold)}</div>
-                        <div class="stats-card-label">📊 Продано единиц</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value">${formatNumber(orderCount)}</div>
-                        <div class="stats-card-label">🛒 Количество заказов</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value">${formatCurrency(averageCheck)}</div>
-                        <div class="stats-card-label">💳 Средний чек</div>
-                    </div>
+                    <div class="stats-card"><div class="stats-card-value">${formatCurrency(totalRevenue)}</div><div class="stats-card-label">💰 Выручка</div></div>
+                    <div class="stats-card"><div class="stats-card-value">${formatCurrency(totalCostAllGoods)}</div><div class="stats-card-label">📦 Себестоимость всего товара</div></div>
+                    <div class="stats-card"><div class="stats-card-value">${formatCurrency(totalExtraCosts)}</div><div class="stats-card-label">➕ Дополнительные расходы</div></div>
+                    <div class="stats-card"><div class="stats-card-value">${formatCurrency(totalExpenses)}</div><div class="stats-card-label">📉 Общие затраты</div></div>
+                    <div class="stats-card"><div class="stats-card-value ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(netProfit)}</div><div class="stats-card-label">📈 Чистая прибыль</div></div>
+                    <div class="stats-card"><div class="stats-card-value">${formatNumber(totalItemsSold)}</div><div class="stats-card-label">📊 Продано единиц</div></div>
+                    <div class="stats-card"><div class="stats-card-value">${formatNumber(orderCount)}</div><div class="stats-card-label">🛒 Количество заказов</div></div>
+                    <div class="stats-card"><div class="stats-card-value">${formatCurrency(averageCheck)}</div><div class="stats-card-label">💳 Средний чек</div></div>
                 </div>
-                
-                <div class="stats-summary-compact">
-                    <div class="stats-summary-value ${profitMargin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(profitMargin)}</div>
-                    <div class="stats-summary-label">Рентабельность продаж</div>
-                </div>
-                
-                <!-- Детализация по товарам -->
-                <div class="detail-section">
-                    <div class="detail-title">📦 Детализация по товарам</div>
-                    <table class="detail-table">
-                        <thead>
-                            <tr><th>Товар</th><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr>
-                        </thead>
-                        <tbody>
-                            ${productDetails.map(p => `
-                                <tr>
-                                    <td>${escapeHtml(p.name)}</td>
-                                    <td><span class="type-badge" style="background:${getTypeColor(p.type)}20; color:${getTypeColor(p.type)};">${escapeHtml(p.type)}</span></td>
-                                    <td class="text-right">${p.qty} шт</td>
-                                    <td class="text-right">${formatCurrency(p.revenue)}</td>
-                                    <td class="text-right">${formatCurrency(p.totalCost)}</td>
-                                    <td class="text-right ${p.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(p.profit)}</td>
-                                    <td class="text-right ${p.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(p.margin)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Детализация по типам -->
-                <div class="detail-section">
-                    <div class="detail-title">🏷️ Детализация по типам мерча</div>
-                    <table class="detail-table">
-                        <thead>
-                            <tr><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr>
-                        </thead>
-                        <tbody>
-                            ${typeDetails.map(t => `
-                                <tr>
-                                    <td><span class="type-badge" style="background:${getTypeColor(t.type)}20; color:${getTypeColor(t.type)};">${escapeHtml(t.type)}</span></td>
-                                    <td class="text-right">${t.qty} шт</td>
-                                    <td class="text-right">${formatCurrency(t.revenue)}</td>
-                                    <td class="text-right">${formatCurrency(t.totalCost)}</td>
-                                    <td class="text-right ${t.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(t.profit)}</td>
-                                    <td class="text-right ${t.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(t.margin)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Две колонки для популярных товаров и типов -->
+                <div class="stats-summary-compact"><div class="stats-summary-value ${profitMargin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(profitMargin)}</div><div class="stats-summary-label">Рентабельность продаж</div></div>
+                <div class="detail-section"><div class="detail-title">📦 Детализация по товарам</div><table class="detail-table"><thead><tr><th>Товар</th><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>
+                    ${productDetails.map(p => `<tr><td>${escapeHtml(p.name)}</td><td><span class="type-badge" style="background:${getTypeColor(p.type)}20; color:${getTypeColor(p.type)};">${escapeHtml(p.type)}</span></td><td class="text-right">${p.qty} шт</td><td class="text-right">${formatCurrency(p.revenue)}</td><td class="text-right">${formatCurrency(p.totalCost)}</td><td class="text-right ${p.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(p.profit)}</td><td class="text-right ${p.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(p.margin)}</td></tr>`).join('')}
+                </tbody></table></div>
+                <div class="detail-section"><div class="detail-title">🏷️ Детализация по типам мерча</div><table class="detail-table"><thead><tr><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>
+                    ${typeDetails.map(t => `<tr><td><span class="type-badge" style="background:${getTypeColor(t.type)}20; color:${getTypeColor(t.type)};">${escapeHtml(t.type)}</span></td><td class="text-right">${t.qty} шт</td><td class="text-right">${formatCurrency(t.revenue)}</td><td class="text-right">${formatCurrency(t.totalCost)}</td><td class="text-right ${t.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(t.profit)}</td><td class="text-right ${t.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(t.margin)}</td></tr>`).join('')}
+                </tbody></table></div>
                 <div class="two-columns">
-                    <!-- Топ популярных товаров -->
-                    <div class="detail-section">
-                        <div class="detail-title">🏆 Самые популярные товары</div>
-                        <table class="detail-table">
-                            <thead>
-                                <tr><th>#</th><th>Товар</th><th>Тип</th><th class="text-right">Продано, шт</th></tr>
-                            </thead>
-                            <tbody>
-                                ${topByQty.map(([name, data], idx) => `
-                                    <tr>
-                                        <td class="text-right"><span class="popular-badge">${idx+1}</span></td>
-                                        <td>${escapeHtml(name)}</td>
-                                        <td><span class="type-badge" style="background:${getTypeColor(data.type)}20; color:${getTypeColor(data.type)};">${escapeHtml(data.type)}</span></td>
-                                        <td class="text-right">${data.qty} шт</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <!-- Топ популярных типов -->
-                    <div class="detail-section">
-                        <div class="detail-title">🏆 Самые популярные типы мерча</div>
-                        <table class="detail-table">
-                            <thead>
-                                <tr><th>#</th><th>Тип</th><th class="text-right">Продано, шт</th></tr>
-                            </thead>
-                            <tbody>
-                                ${topTypesByQty.map(([type, data], idx) => `
-                                    <tr>
-                                        <td class="text-right"><span class="popular-badge">${idx+1}</span></td>
-                                        <td><span class="type-badge" style="background:${getTypeColor(type)}20; color:${getTypeColor(type)};">${escapeHtml(type)}</span></td>
-                                        <td class="text-right">${data.qty} шт</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="detail-section"><div class="detail-title">🏆 Самые популярные товары</div><table class="detail-table"><thead><tr><th>#</th><th>Товар</th><th>Тип</th><th class="text-right">Продано, шт</th></tr></thead><tbody>
+                        ${topByQty.map(([name, data], idx) => `<tr><td class="text-right"><span class="popular-badge">${idx+1}</span></td><td>${escapeHtml(name)}</td><td><span class="type-badge" style="background:${getTypeColor(data.type)}20; color:${getTypeColor(data.type)};">${escapeHtml(data.type)}</span></td><td class="text-right">${data.qty} шт</td></tr>`).join('')}
+                    </tbody></table></div>
+                    <div class="detail-section"><div class="detail-title">🏆 Самые популярные типы мерча</div><table class="detail-table"><thead><tr><th>#</th><th>Тип</th><th class="text-right">Продано, шт</th></tr></thead><tbody>
+                        ${topTypesByQty.map(([type, data], idx) => `<td><td class="text-right"><span class="popular-badge">${idx+1}</span></td><td><span class="type-badge" style="background:${getTypeColor(type)}20; color:${getTypeColor(type)};">${escapeHtml(type)}</span></td><td class="text-right">${data.qty} шт</td></tr>`).join('')}
+                    </tbody></table></div>
                 </div>
-                
-                <div class="extra-costs-section">
-                    <div class="detail-title">➕ Дополнительные расходы</div>
-                    <div id="extra-costs-list">
-                        ${extraCosts.length === 0 ? '<div style="color: var(--text-muted); text-align: center; padding: 12px;">Нет дополнительных расходов</div>' : ''}
-                        ${extraCosts.map((cost, idx) => `
-                            <div class="extra-cost-item">
-                                <span class="extra-cost-name">${escapeHtml(cost.name)}</span>
-                                <span class="extra-cost-amount">${cost.amount} ₽</span>
-                                <button class="extra-cost-delete" onclick="deleteExtraCost(${idx})">🗑</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="add-cost-form">
-                        <input type="text" id="newCostName" class="add-cost-input" placeholder="Название (стол, доставка...)" autocomplete="off">
-                        <input type="number" id="newCostAmount" class="add-cost-input-number" placeholder="Сумма" value="0" step="100">
-                        <button class="add-cost-btn" onclick="addExtraCostFromModal()">➕ Добавить</button>
-                    </div>
-                </div>
+                <div class="extra-costs-section"><div class="detail-title">➕ Дополнительные расходы</div><div id="extra-costs-list">
+                    ${extraCosts.length === 0 ? '<div style="color: var(--text-muted); text-align: center; padding: 12px;">Нет дополнительных расходов</div>' : ''}
+                    ${extraCosts.map((cost, idx) => `<div class="extra-cost-item"><span class="extra-cost-name">${escapeHtml(cost.name)}</span><span class="extra-cost-amount">${cost.amount} ₽</span><button class="extra-cost-delete" onclick="deleteExtraCost(${idx})">🗑</button></div>`).join('')}
+                </div><div class="add-cost-form"><input type="text" id="newCostName" class="add-cost-input" placeholder="Название (стол, доставка...)" autocomplete="off"><input type="number" id="newCostAmount" class="add-cost-input-number" placeholder="Сумма" value="0" step="100"><button class="add-cost-btn" onclick="addExtraCostFromModal()">➕ Добавить</button></div></div>
             `;
             
             container.innerHTML = html;
@@ -1661,18 +1814,48 @@
             const cartItemsDiv = document.getElementById('cart-items-list');
             const cartTotalDiv = document.getElementById('cart-total');
             const cartActionsDiv = document.getElementById('cart-actions');
+            const discountPanel = document.getElementById('discount-panel');
+            
             if (!cartItemsDiv) return;
             const hasAny = Object.keys(cart).length > 0;
+            
             if (!hasAny) {
                 cartItemsDiv.innerHTML = '<div class="empty-cart">🍌 Корзина пуста</div>';
                 if (cartTotalDiv) cartTotalDiv.style.display = 'none';
                 if (cartActionsDiv) cartActionsDiv.style.display = 'none';
+                if (discountPanel) discountPanel.innerHTML = '';
                 updateCartBadges();
                 return;
             }
+            
+            // Панель скидок
+            let discountHtml = `
+                <div class="discount-section">
+                    <div class="discount-header" onclick="toggleDiscountPanel()">
+                        <span class="discount-title">🎯 Скидки</span>
+                        <span>▼</span>
+                    </div>
+                    <div id="discount-content" style="display: none;">
+                        <div style="margin-bottom: 12px;">
+                            <div class="discount-title" style="font-size: 13px;">Скидка на всю корзину</div>
+                            <div class="discount-input-group">
+                                <select id="cartDiscountType" class="discount-select" onchange="updateCartDiscount()">
+                                    <option value="none" ${cartDiscount.type === 'none' ? 'selected' : ''}>Без скидки</option>
+                                    <option value="percent" ${cartDiscount.type === 'percent' ? 'selected' : ''}>%</option>
+                                    <option value="fixed" ${cartDiscount.type === 'fixed' ? 'selected' : ''}>₽</option>
+                                </select>
+                                <input type="number" id="cartDiscountValue" class="discount-input" placeholder="Сумма скидки" value="${cartDiscount.value}" onchange="updateCartDiscount()" ${cartDiscount.type === 'none' ? 'disabled' : ''}>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (discountPanel) discountPanel.innerHTML = discountHtml;
+            
             const activeRules = checkRulesForCart();
             let total = 0;
             let html = '';
+            
             if (activeRules.length > 0) {
                 html += `<div style="background: var(--badge-bg); border-radius: 16px; padding: 12px; margin-bottom: 16px; border-left: 4px solid var(--btn-bg);">
                             <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--badge-text);">✨ Активные правила ✨</div>`;
@@ -1684,17 +1867,39 @@
                 }
                 html += `</div>`;
             }
+            
+            // Рассчитываем общую сумму для скидки
+            let subtotal = 0;
+            for (const [idxStr, qty] of Object.entries(cart)) {
+                const idx = parseInt(idxStr);
+                const card = originalCardsData[idx];
+                if (card) subtotal += qty * card.price;
+            }
+            
             for (const [idxStr, qty] of Object.entries(cart)) {
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
                 if (!card) continue;
-                const itemTotal = qty * card.price;
+                let itemTotal = qty * card.price;
+                let discountedPrice = card.price;
+                
+                if (cartDiscount.type === 'percent' && cartDiscount.value > 0) {
+                    discountedPrice = card.price * (1 - cartDiscount.value / 100);
+                    itemTotal = qty * discountedPrice;
+                } else if (cartDiscount.type === 'fixed' && cartDiscount.value > 0 && subtotal > 0) {
+                    const ratio = (card.price * qty) / subtotal;
+                    discountedPrice = card.price - (cartDiscount.value * ratio) / qty;
+                    if (discountedPrice < 0) discountedPrice = 0;
+                    itemTotal = qty * discountedPrice;
+                }
+                
                 total += itemTotal;
                 const isZero = qty === 0;
                 html += `<div class="cart-item ${isZero ? 'disabled' : ''}">
                             <div class="cart-item-info">
                                 <div class="cart-item-name">${escapeHtml(card.name)}</div>
-                                <div class="cart-item-price">${card.price} ₽ × ${qty} = ${itemTotal} ₽</div>
+                                <div class="cart-item-price">${card.price} ₽ × ${qty} = ${itemTotal.toFixed(2)} ₽</div>
+                                ${discountedPrice !== card.price ? `<div style="font-size: 11px; color: var(--profit-positive);">Скидка: ${((card.price - discountedPrice) / card.price * 100).toFixed(0)}%</div>` : ''}
                             </div>
                             <div class="cart-item-quantity">
                                 <button class="cart-qty-btn" onclick="changeCartQty(${idx}, -1)" ${isZero ? 'disabled' : ''}>−</button>
@@ -1704,14 +1909,27 @@
                             </div>
                         </div>`;
             }
+            
             cartItemsDiv.innerHTML = html;
             if (cartTotalDiv) {
                 cartTotalDiv.style.display = 'block';
-                cartTotalDiv.innerHTML = `🍌 Итого: ${total} ₽`;
+                cartTotalDiv.innerHTML = `🍌 Итого: ${total.toFixed(2)} ₽`;
             }
             if (cartActionsDiv && totalPositiveCount > 0) cartActionsDiv.style.display = 'flex';
             else if (cartActionsDiv) cartActionsDiv.style.display = 'none';
             updateCartBadges();
+        }
+        
+        function toggleDiscountPanel() {
+            const content = document.getElementById('discount-content');
+            if (content) content.style.display = content.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function updateCartDiscount() {
+            const type = document.getElementById('cartDiscountType').value;
+            const value = parseFloat(document.getElementById('cartDiscountValue').value) || 0;
+            cartDiscount = { type, value };
+            updateCartUI();
         }
         
         function addToCart(index) {
@@ -1741,7 +1959,8 @@
                 showToast(`Нельзя добавить больше, чем есть (${card.stock} шт)`, false);
                 return;
             }
-            cart[index] = newQty;
+            if (newQty === 0) delete cart[index];
+            else cart[index] = newQty;
             updateCartUI();
         }
         
@@ -1754,6 +1973,8 @@
         
         function clearCart() {
             cart = {};
+            cartDiscount = { type: 'none', value: 0 };
+            itemDiscounts = {};
             updateCartUI();
             showToast(`Корзина очищена`, true);
         }
@@ -1799,6 +2020,22 @@
                 showToast("Нет товаров для продажи", false);
                 return;
             }
+            
+            // Рассчитываем общую сумму с учётом скидок
+            let subtotal = 0;
+            for (const [idxStr, qty] of items) {
+                const idx = parseInt(idxStr);
+                const card = originalCardsData[idx];
+                subtotal += qty * card.price;
+            }
+            
+            let total = subtotal;
+            if (cartDiscount.type === 'percent' && cartDiscount.value > 0) {
+                total = subtotal * (1 - cartDiscount.value / 100);
+            } else if (cartDiscount.type === 'fixed' && cartDiscount.value > 0) {
+                total = Math.max(0, subtotal - cartDiscount.value);
+            }
+            
             for (const [idxStr, qty] of items) {
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
@@ -1807,32 +2044,35 @@
                     return;
                 }
             }
-            const total = items.reduce((sum, [idxStr, qty]) => {
-                const idx = parseInt(idxStr);
-                return sum + qty * originalCardsData[idx].price;
-            }, 0);
+            
             const activeRules = checkRulesForCart();
             if (activeRules.length > 0) {
                 let rulesMessage = "Не забудьте:\n";
                 for (const rule of activeRules) rulesMessage += `• ${rule.message}\n`;
                 showToast(rulesMessage, true);
             }
+            
             const historyItems = items.map(([idxStr, qty]) => {
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
                 return { name: card.name, qty: qty, price: card.price };
             });
             addToHistory(historyItems, total, 'basket', false);
+            
             const cartCopy = { ...cart };
             closeCartModal();
             cart = {};
+            cartDiscount = { type: 'none', value: 0 };
+            itemDiscounts = {};
             updateCartUI();
+            
             for (const [idxStr, qty] of Object.entries(cartCopy)) {
                 if (qty === 0) continue;
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
                 const newStock = card.stock - qty;
                 card.stock = newStock;
+                
                 const cards = document.querySelectorAll('.card');
                 let targetCard = null;
                 for (let i = 0; i < cards.length; i++) {
@@ -1849,6 +2089,7 @@
                     else targetCard.classList.remove('out-of-stock');
                 }
             }
+            
             (async () => {
                 for (const [idxStr, qty] of Object.entries(cartCopy)) {
                     if (qty === 0) continue;
@@ -1859,7 +2100,7 @@
                 }
                 showUpdateTime();
             })();
-            showToast(`Продажа на ${total} ₽ завершена!`, true);
+            showToast(`Продажа на ${total.toFixed(2)} ₽ завершена!`, true);
         }
         
         // ========== ФИЛЬТР ТИПОВ ==========
@@ -2050,7 +2291,7 @@
                 container.innerHTML = '<div class="loading">🍌 Ни одного бананчика не найдено 🍌</div>';
                 return;
             }
-            currentFilteredData.forEach((card) => {
+            currentFilteredData.forEach((card, idx) => {
                 const originalIndex = originalCardsData.findIndex(orig => orig.name === card.name && orig.type === card.type);
                 const type = card.type || "";
                 const name = card.name || "Без названия";
@@ -2071,6 +2312,9 @@
                         <div class="stock">Остаток: ${stock} шт</div>
                         <div class="total">📦 Всего: ${total} шт</div>
                         <div class="price">💰 Цена: ${price} ₽</div>
+                        <div class="edit-buttons">
+                            <button class="edit-btn" onclick="openEditProductModal(${originalIndex})">✏️</button>
+                        </div>
                     </div>
                     <div class="buttons">
                         <button class="minus" data-index="${originalIndex}" data-delta="-1">−1</button>
@@ -2208,6 +2452,7 @@
             if (event.target === document.getElementById('cartModal')) closeCartModal();
             if (event.target === document.getElementById('rulesModal')) closeRulesModal();
             if (event.target === document.getElementById('statsModal')) closeStatsModal();
+            if (event.target === document.getElementById('editProductModal')) closeEditProductModal();
         }
         
         function bindDateTimeEvents() {
