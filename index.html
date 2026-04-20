@@ -1219,7 +1219,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbw-QMM6PtyGZiUMcbWi8nJnfNTyGtDMVbNQ1ftKXLEi2jrc_IB0Y-TziVm4M7DaQ7-exw/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbx80BtKGQAnfarEfLhMNPEk4Li4YsUFAxFYwFNougyvxtvUSUqoO10Ko3BbuTjtPn86wA/exec";
         const CORRECT_PASSWORD = "банан";
         
         let originalCardsData = [];
@@ -1317,7 +1317,14 @@
             };
             salesHistory.unshift(entry);
             if (salesHistory.length > 200) salesHistory = salesHistory.slice(0, 200);
-            saveHistory();
+            saveHistoryToLocal();
+            // Отправляем на сервер
+            fetch(`${API_URL}?action=syncHistory&t=${Date.now()}`, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ history: salesHistory })
+            }).catch(e => console.error('Ошибка синхронизации:', e));
             if (document.getElementById('historyModal')?.style.display === 'block') {
                 renderHistoryList();
             }
