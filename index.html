@@ -369,7 +369,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwzhW881nQZaYuLOogRVGeO_orvSRQMWlvUB1S8Hx5n0wSugAbRLgwlFspkfVZe_oJeFg/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwLqK_PCLuTQEcBCPeBWjPXebNFxnaEsZMGY5Wk1pYoUNoH3baHWUkxcIrMGe28CJDDBQ/exec";
         const CORRECT_PASSWORD = "банан";
         
         let originalCardsData = [];
@@ -411,22 +411,21 @@
             }
         }
 
+        // Сохранение истории через GET запрос
         async function syncHistoryToServer() {
             try {
-                const response = await fetch(`${API_URL}?action=syncHistory&t=${Date.now()}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ history: salesHistory })
-                });
-                const result = await response.json();
-                console.log('История синхронизирована с сервером:', result);
-                return result.success;
+                for (const entry of salesHistory) {
+                    const data = encodeURIComponent(JSON.stringify(entry));
+                    await fetch(`${API_URL}?action=saveHistory&data=${data}&t=${Date.now()}`);
+                }
+                console.log('История синхронизирована с сервером');
+                return true;
             } catch (error) {
                 console.error('Ошибка синхронизации истории:', error);
                 return false;
             }
         }
-
+        // Загрузка истории с сервера
         async function loadHistoryFromServer() {
             try {
                 const response = await fetch(`${API_URL}?action=getFullHistory&t=${Date.now()}`);
@@ -445,7 +444,44 @@
                 return false;
             }
         }
+        // Сохранение правил
+        async function saveRulesToServer() {
+            try {
+                const data = encodeURIComponent(JSON.stringify(rulesList));
+                await fetch(`${API_URL}?action=saveRules&data=${data}&t=${Date.now()}`);
+                console.log('Правила синхронизированы с сервером');
+            } catch (error) {
+                console.error('Ошибка синхронизации правил:', error);
+            }
+        }
+    
+        function saveRules() {
+            localStorage.setItem('merch_rules_structured', JSON.stringify(rulesList));
+            saveRulesToServer();
+        }
 
+        async function loadRules() {
+            try {
+                const response = await fetch(`${API_URL}?action=getRules&t=${Date.now()}`);
+                const data = await response.json();
+                if (data && data.rules && data.rules.length > 0) {
+                    rulesList = data.rules;
+                    localStorage.setItem('merch_rules_structured', JSON.stringify(rulesList));
+                    renderRulesList();
+                    return;
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки правил с сервера:', error);
+            }
+            const saved = localStorage.getItem('merch_rules_structured');
+            if (saved) {
+                rulesList = JSON.parse(saved);
+            } else {
+                rulesList = [];
+            }
+            renderRulesList();
+        }
+        
         async function loadHistory() {
             const loaded = await loadHistoryFromServer();
             if (!loaded) {
@@ -469,12 +505,16 @@
             };
             salesHistory.unshift(entry);
             if (salesHistory.length > 200) salesHistory = salesHistory.slice(0, 200);
-            saveHistory();
+            saveHistoryToLocal();
+    
+            // Отправляем запись на сервер
+            const data = encodeURIComponent(JSON.stringify(entry));
+            fetch(`${API_URL}?action=saveHistory&data=${data}&t=${Date.now()}`).catch(e => console.error(e));
+    
             if (document.getElementById('historyModal')?.style.display === 'block') {
                 renderHistoryList();
             }
         }
-
         function addSingleSaleToHistory(name, qty, price, isReturn = false) {
             const total = qty * price;
             addToHistory([{ name: name, qty: qty, price: price }], total, 'single', isReturn);
