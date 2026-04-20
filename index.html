@@ -566,6 +566,38 @@
             font-size: 11px;
             margin-left: 8px;
         }
+
+        /* Стили для меток методов (Корзина/Поштучно) */
+        .history-badge-method-basket {
+            background: #3498db;
+            color: white;
+        }
+        .history-badge-method-single {
+            background: #9b59b6;
+            color: white;
+        }
+        /* Стили для меток типов (Продажа/Возврат) */
+        .history-badge-type-sale {
+            background: #2ecc71;
+            color: white;
+        }
+        .history-badge-type-return {
+            background: #e74c3c;
+            color: white;
+        }
+        /* Для тёмной темы - чуть ярче */
+        body.dark .history-badge-method-basket {
+            background: #2980b9;
+        }
+        body.dark .history-badge-method-single {
+            background: #8e44ad;
+        }
+        body.dark .history-badge-type-sale {
+            background: #27ae60;
+        }
+        body.dark .history-badge-type-return {
+            background: #c0392b;
+        }
         .history-clear-btn {
             background: var(--minus-bg);
             color: var(--minus-color);
@@ -1488,12 +1520,14 @@
                 }
         
                 const methodLabel = isBasket ? 'Корзина' : 'Поштучно';
+                const methodClass = isBasket ? 'history-badge-method-basket' : 'history-badge-method-single';
                 const actionLabel = isReturn ? 'Возврат' : 'Продажа';
-        
+                const actionClass = isReturn ? 'history-badge-type-return' : 'history-badge-type-sale';
+
                 html += `
                     <div class="history-item">
                         <div class="history-content">
-                            <div class="history-date">${dateStr} <span class="history-badge">${methodLabel}</span> <span class="history-badge" style="background:${isReturn ? 'var(--minus-bg)' : 'var(--badge-bg)'}">${actionLabel}</span></div>
+                            <div class="history-date">${dateStr} <span class="history-badge ${methodClass}">${methodLabel}</span> <span class="history-badge ${actionClass}">${actionLabel}</span></div>
                             <div class="history-details">${itemsHtml}</div>
                             <div class="${isReturn ? 'history-return' : 'history-sale'}">${isReturn ? '↩️' : '💰'} Итого: ${entry.total} ₽</div>
                         </div>
