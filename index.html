@@ -1760,7 +1760,7 @@
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 16px;
-            z-index: 100;
+            z-index: 1000;
             display: none;
             margin-top: 4px;
             box-shadow: 0 2px 8px var(--shadow);
@@ -1805,12 +1805,12 @@
             width: 32px;
             height: 32px;
             border-radius: 16px;
-            background: var(--badge-bg);
-            border: 1px solid var(--border-color);
+            background: var(--btn-bg);
+            border: none;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            color: var(--text-primary);
+            color: white;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -1820,19 +1820,18 @@
             transform: scale(0.95);
         }
 
-        /* Кнопки скидок в один ряд */
+        /* Кнопки скидок */
         .discount-buttons-row {
             display: flex;
             gap: 8px;
-            margin-top: 12px;
+            margin-top: 4px;
         }
 
         .discount-action-btn {
-            flex: 1;
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 30px;
-            padding: 6px 8px;
+            padding: 4px 8px;
             font-size: 12px;
             cursor: pointer;
             color: var(--text-primary);
@@ -1844,7 +1843,28 @@
             background: var(--badge-bg);
         }
 
-        /* Кнопка "Товары" отдельно, чуть шире */
+        .discount-action-btn.apply-btn {
+            flex: 1;
+            max-width: 100px;
+        }
+
+        .discount-action-btn.cancel-btn {
+            flex: 1;
+            max-width: 100px;
+        }
+
+        .discount-action-btn.reset-btn {
+            flex: 2;
+        }
+
+        /* Кнопка "Товары" */
+        .discount-products-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
         .discount-products-btn {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -1854,9 +1874,10 @@
             cursor: pointer;
             color: var(--text-primary);
             text-align: center;
-            margin-top: 8px;
-            width: 100%;
-            max-width: 120px;
+            white-space: nowrap;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
         }
 
         .discount-products-btn:hover {
@@ -1887,7 +1908,7 @@
         }
 
         .product-select-item.selected {
-            background: var(--badge-bg);
+            background: rgba(243, 156, 18, 0.15);
         }
 
         .product-select-check {
@@ -2192,6 +2213,7 @@
             Намяукано | <a href="https://docs.google.com/spreadsheets/d/12b52PdQfgsN_8jwZRpOEbZSMWoYj3s1CRHqA2As24U4/edit" target="_blank">Синхронизация с таблицей</a>
         </div>
     </div>
+
     <!-- Модалка корзины -->
     <div id="cartModal" class="modal cart-modal">
         <div class="modal-content">
@@ -2261,7 +2283,6 @@
                 </div>
                 <div class="history-filter-bottom">
                     <div class="history-filter-left">
-                        <!-- Строка "с" -->
                         <div class="custom-datetime" id="datetimeFromContainer">
                             <span class="datetime-label">с</span>
                             <div class="datetime-group">
@@ -2279,7 +2300,6 @@
                         </div>
                     </div>
                     <div class="history-filter-left" style="margin-top: 8px;">
-                        <!-- Строка "по" -->
                         <div class="custom-datetime" id="datetimeToContainer">
                             <span class="datetime-label">по</span>
                             <div class="datetime-group">
@@ -2350,6 +2370,7 @@
             </div>
         </div>
     </div>
+
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzTy-EPlVQ5HYDbqCMdZ0fj10j5SzQ0EDJWmIjBhaBO_rKFaUZJIj4TQe9DZEcTd67aug/exec";
         const CORRECT_PASSWORD = "банан";
@@ -2371,6 +2392,7 @@
         };
         let selectedDiscountProducts = new Set();
         let discountProductListVisible = false;
+        let itemDiscounts = {};
 
         let typeColors = new Map();
         const colorPalette = ['#e67e22', '#f39c12', '#2ecc71', '#3498db', '#9b59b6', '#e74c3c', '#1abc9c', '#f1c40f', '#e67e22', '#95a5a6'];
@@ -2443,6 +2465,18 @@
             if (chevron) chevron.textContent = '▼';
         }
 
+        // Закрытие выпадающих списков при клике вне
+        document.addEventListener('click', function(e) {
+            const cartSelect = document.getElementById('cartDiscountSelectDropdown');
+            const itemSelect = document.getElementById('itemDiscountSelectDropdown');
+            if (cartSelect && !e.target.closest('#cartDiscountSelectTrigger') && !e.target.closest('#cartDiscountSelectDropdown')) {
+                cartSelect.classList.remove('show');
+            }
+            if (itemSelect && !e.target.closest('#itemDiscountSelectTrigger') && !e.target.closest('#itemDiscountSelectDropdown')) {
+                itemSelect.classList.remove('show');
+            }
+        });
+
         // Кастомный селект для типа скидки на корзину
         function toggleCartDiscountSelect() {
             const dropdown = document.getElementById('cartDiscountSelectDropdown');
@@ -2466,9 +2500,10 @@
 
         function changeDiscountValue(delta) {
             const input = document.getElementById('cartDiscountValue');
-            if (input) {
+            if (input && !input.disabled) {
                 let val = parseFloat(input.value) || 0;
-                val = Math.max(0, val + delta);
+                let step = (cartDiscount.type === 'percent') ? 1 : 100;
+                val = Math.max(0, val + delta * step);
                 input.value = val;
                 cartDiscount.value = val;
                 updateCartUI();
@@ -2477,7 +2512,7 @@
 
         function updateCartDiscountFromInput() {
             const input = document.getElementById('cartDiscountValue');
-            if (input) {
+            if (input && !input.disabled) {
                 cartDiscount.value = parseFloat(input.value) || 0;
                 updateCartUI();
             }
@@ -2497,6 +2532,21 @@
             }
             closeDiscountPanel();
             updateCartUI();
+        }
+
+        // Кастомный селект для типа скидки на товары
+        function toggleItemDiscountSelect() {
+            const dropdown = document.getElementById('itemDiscountSelectDropdown');
+            if (dropdown) dropdown.classList.toggle('show');
+        }
+
+        function selectItemDiscountType(type, label) {
+            const trigger = document.getElementById('itemDiscountSelectTrigger');
+            const hiddenSelect = document.getElementById('itemDiscountTypeSelect');
+            if (trigger) trigger.textContent = label;
+            if (hiddenSelect) hiddenSelect.setAttribute('data-value', type);
+            const dropdown = document.getElementById('itemDiscountSelectDropdown');
+            if (dropdown) dropdown.classList.remove('show');
         }
 
         function toggleProductSelectionForDiscount(productName) {
@@ -2561,21 +2611,6 @@
             itemDiscounts = {};
             updateCartUI();
             showToast("Скидки на товары сброшены", true);
-        }
-
-        // Кастомный селект для типа скидки на товары
-        function toggleItemDiscountSelect() {
-            const dropdown = document.getElementById('itemDiscountSelectDropdown');
-            if (dropdown) dropdown.classList.toggle('show');
-        }
-
-        function selectItemDiscountType(type, label) {
-            const trigger = document.getElementById('itemDiscountSelectTrigger');
-            const hiddenSelect = document.getElementById('itemDiscountTypeSelect');
-            if (trigger) trigger.textContent = label;
-            if (hiddenSelect) hiddenSelect.setAttribute('data-value', type);
-            const dropdown = document.getElementById('itemDiscountSelectDropdown');
-            if (dropdown) dropdown.classList.remove('show');
         }
 
         // ========== ДОПОЛНИТЕЛЬНЫЕ РАСХОДЫ ==========
@@ -2779,7 +2814,6 @@
         let currentRuleType = "type";
         let selectedProducts = new Set();
         let scrollPosition = 0;
-        let itemDiscounts = {};
 
         async function syncFullRulesToServer() {
             try {
@@ -3464,12 +3498,12 @@
                     <div class="stats-card"><div class="stats-card-value">${formatCurrency(averageCheck)}</div><div class="stats-card-label">💳 Средний чек</div></div>
                 </div>
                 <div class="stats-summary-compact"><div class="stats-summary-value ${profitMargin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(profitMargin)}</div><div class="stats-summary-label">Рентабельность продаж</div></div>
-                <div class="detail-section"><div class="detail-title">📦 Детализация по товарам</div><table class="detail-table"><thead><tr><th>Товар</th><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>
+                <div class="detail-section"><div class="detail-title">📦 Детализация по товарам</div><table class="detail-table"><thead><tr><th>Товар</th><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th><tr></thead><tbody>
                     ${productDetails.map(p => `<tr><td>${escapeHtml(p.name)}</td><td><span class="type-badge" style="background:${getTypeColor(p.type)}20; color:${getTypeColor(p.type)};">${escapeHtml(p.type)}</span></td><td class="text-right">${p.qty} шт</td><td class="text-right">${formatCurrency(p.revenue)}</td><td class="text-right">${formatCurrency(p.totalCost)}</td><td class="text-right ${p.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(p.profit)}</td><td class="text-right ${p.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(p.margin)}</td></tr>`).join('')}
                 </tbody></table></div>
                 <div class="detail-section"><div class="detail-title">🏷️ Детализация по типам мерча</div><table class="detail-table"><thead><tr><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>
                     ${typeDetails.map(t => `<tr><td><span class="type-badge" style="background:${getTypeColor(t.type)}20; color:${getTypeColor(t.type)};">${escapeHtml(t.type)}</span></td><td class="text-right">${t.qty} шт</td><td class="text-right">${formatCurrency(t.revenue)}</td><td class="text-right">${formatCurrency(t.totalCost)}</td><td class="text-right ${t.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(t.profit)}</td><td class="text-right ${t.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(t.margin)}</td></tr>`).join('')}
-                </tbody></tr></div>
+                </tbody></table></div>
                 <div class="two-columns">
                     <div class="detail-section"><div class="detail-title">🏆 Самые популярные товары</div><table class="detail-table"><thead><tr><th>#</th><th>Товар</th><th>Тип</th><th class="text-right">Продано, шт</th></tr></thead><tbody>
                         ${topByQty.map(([name, data], idx) => `<tr><td class="text-right"><span class="popular-badge">${idx+1}</span></td><td>${escapeHtml(name)}</td><td><span class="type-badge" style="background:${getTypeColor(data.type)}20; color:${getTypeColor(data.type)};">${escapeHtml(data.type)}</span></td><td class="text-right">${data.qty} шт</td></tr>`).join('')}
@@ -3571,7 +3605,7 @@
                             <div class="discount-group-title">Скидка на всю корзину</div>
                             <div class="discount-row">
                                 <div class="discount-custom-select">
-                                    <div class="discount-custom-select-trigger" id="cartDiscountSelectTrigger" onclick="toggleCartDiscountSelect()">Без скидки</div>
+                                    <div class="discount-custom-select-trigger" id="cartDiscountSelectTrigger" onclick="event.stopPropagation(); toggleCartDiscountSelect()">Без скидки</div>
                                     <div class="discount-custom-select-dropdown" id="cartDiscountSelectDropdown">
                                         <div class="discount-select-option" onclick="selectCartDiscountType('none', 'Без скидки')">Без скидки</div>
                                         <div class="discount-select-option" onclick="selectCartDiscountType('percent', '%')">%</div>
@@ -3579,9 +3613,9 @@
                                     </div>
                                 </div>
                                 <div class="discount-amount-control">
-                                    <button class="discount-step-btn" onclick="changeDiscountValue(-100)">−</button>
+                                    <button class="discount-step-btn" onclick="changeDiscountValue(-1)">−</button>
                                     <input type="number" id="cartDiscountValue" class="discount-amount-input" value="0" ${cartDiscount.type === 'none' ? 'disabled' : ''} onchange="updateCartDiscountFromInput()">
-                                    <button class="discount-step-btn" onclick="changeDiscountValue(100)">+</button>
+                                    <button class="discount-step-btn" onclick="changeDiscountValue(1)">+</button>
                                 </div>
                             </div>
                         </div>
@@ -3590,7 +3624,7 @@
                             <div class="discount-group-title">Скидка на отдельные товары</div>
                             <div class="discount-row">
                                 <div class="discount-custom-select">
-                                    <div class="discount-custom-select-trigger" id="itemDiscountSelectTrigger" onclick="toggleItemDiscountSelect()">%</div>
+                                    <div class="discount-custom-select-trigger" id="itemDiscountSelectTrigger" onclick="event.stopPropagation(); toggleItemDiscountSelect()">%</div>
                                     <div class="discount-custom-select-dropdown" id="itemDiscountSelectDropdown">
                                         <div class="discount-select-option" onclick="selectItemDiscountType('percent', '%')">%</div>
                                         <div class="discount-select-option" onclick="selectItemDiscountType('fixed', '₽')">₽</div>
@@ -3598,32 +3632,20 @@
                                     <input type="hidden" id="itemDiscountTypeSelect" data-value="percent">
                                 </div>
                                 <input type="number" id="itemDiscountValue" class="discount-amount-input" placeholder="Сумма" value="0" step="100">
+                                <button class="discount-products-btn" onclick="toggleDiscountProductsList()">Товары</button>
                             </div>
-                            <button class="discount-products-btn" onclick="toggleDiscountProductsList()">Товары</button>
                             <div id="productDiscountList" style="display: none; margin-top: 8px;"></div>
                         </div>
 
                         <div class="discount-buttons-row">
-                            <button class="discount-action-btn" onclick="applyItemDiscount()">Применить</button>
-                            <button class="discount-action-btn" onclick="closeDiscountPanel()">Отмена</button>
-                            <button class="discount-action-btn" onclick="resetCartDiscount()">Сбросить все скидки</button>
+                            <button class="discount-action-btn apply-btn" onclick="applyItemDiscount()">Применить</button>
+                            <button class="discount-action-btn cancel-btn" onclick="closeDiscountPanel()">Отмена</button>
+                            <button class="discount-action-btn reset-btn" onclick="resetCartDiscount()">Сбросить скидки</button>
                         </div>
                     </div>
                 </div>
             `;
             if (discountPanel) discountPanel.innerHTML = discountHtml;
-
-            // Закрываем выпадающие списки при клике вне
-            document.addEventListener('click', function(e) {
-                const cartSelect = document.getElementById('cartDiscountSelectDropdown');
-                const itemSelect = document.getElementById('itemDiscountSelectDropdown');
-                if (cartSelect && !e.target.closest('#cartDiscountSelectTrigger') && !e.target.closest('#cartDiscountSelectDropdown')) {
-                    cartSelect.classList.remove('show');
-                }
-                if (itemSelect && !e.target.closest('#itemDiscountSelectTrigger') && !e.target.closest('#itemDiscountSelectDropdown')) {
-                    itemSelect.classList.remove('show');
-                }
-            });
 
             const activeRules = checkRulesForCart();
             let total = 0;
