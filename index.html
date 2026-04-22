@@ -459,6 +459,16 @@
             flex-wrap: wrap;
             position: relative;
             transition: all 0.2s ease;
+            cursor: grab;
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .card.drag-over {
+            border-top: 3px solid var(--btn-bg);
         }
 
         .card.out-of-stock {
@@ -1397,6 +1407,18 @@
             cursor: pointer;
         }
 
+        .cart-gift {
+            flex: 1;
+            background: var(--minus-bg);
+            color: var(--minus-color);
+            width: auto;
+            padding: 12px;
+            font-size: 14px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
         .empty-cart {
             text-align: center;
             padding: 40px;
@@ -1856,6 +1878,26 @@
             background: var(--badge-bg);
         }
 
+        .discount-all-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            padding: 5px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            color: var(--text-primary);
+            text-align: center;
+            white-space: nowrap;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .discount-all-btn:hover {
+            background: var(--badge-bg);
+        }
+
         .product-select-list {
             max-height: 150px;
             overflow-y: auto;
@@ -1942,6 +1984,18 @@
             font-size: 12px;
             cursor: pointer;
             flex: 1;
+        }
+
+        /* Стили для сортировки перетаскиванием */
+        .sort-handle {
+            cursor: grab;
+            margin-right: 8px;
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .sort-handle:active {
+            cursor: grabbing;
         }
 
         @media (min-width: 1024px) {
@@ -2106,7 +2160,8 @@
         body.dark .edit-label,
         body.dark .edit-input,
         body.dark .discount-action-btn,
-        body.dark .discount-products-btn {
+        body.dark .discount-products-btn,
+        body.dark .discount-all-btn {
             color: #f5e6c4 !important;
         }
 
@@ -2195,6 +2250,7 @@
             </div>
             <div id="cart-total" class="cart-total" style="display:none;">Итого: 0 ₽</div>
             <div class="cart-actions" id="cart-actions" style="display:none;">
+                <button class="cart-gift" onclick="giftCart()">🎁 Подарить</button>
                 <button class="cart-clear" onclick="clearCart()">Очистить</button>
                 <button class="cart-checkout" onclick="checkout()">✅ Продать всё</button>
             </div>
@@ -2353,10 +2409,14 @@
         let currentSortBy = "none";
         let typeOptions = [];
 
-        let cartDiscount = {
-            type: 'none',
-            value: 0
-        };
+        // Для пользовательской сортировки
+        let customOrder = [];
+        let isCustomSortMode = false;
+
+        // Для перетаскивания
+        let dragStartIndex = null;
+
+        // Скидки
         let selectedDiscountProducts = new Set();
         let discountProductListVisible = false;
         let itemDiscounts = {};
@@ -2431,97 +2491,18 @@
             if (chevron) chevron.textContent = '▼';
         }
 
-        // Закрытие выпадающих списков при клике вне (но не закрытие всей панели!)
+        // Закрытие выпадающих списков при клике вне
         document.addEventListener('click', function(e) {
-            const cartSelect = document.getElementById('cartDiscountSelectDropdown');
             const itemSelect = document.getElementById('itemDiscountSelectDropdown');
-            if (cartSelect && !e.target.closest('#cartDiscountSelectTrigger') && !e.target.closest('#cartDiscountSelectDropdown')) {
-                cartSelect.classList.remove('show');
-            }
             if (itemSelect && !e.target.closest('#itemDiscountSelectTrigger') && !e.target.closest('#itemDiscountSelectDropdown')) {
                 itemSelect.classList.remove('show');
             }
         });
 
-        // Кастомный селект для типа скидки на корзину
-        function toggleCartDiscountSelect() {
-            const dropdown = document.getElementById('cartDiscountSelectDropdown');
-            if (dropdown) {
-                const itemDropdown = document.getElementById('itemDiscountSelectDropdown');
-                if (itemDropdown) itemDropdown.classList.remove('show');
-                dropdown.classList.toggle('show');
-            }
-        }
-
-        function selectCartDiscountType(type, label) {
-            cartDiscount.type = type;
-            const trigger = document.getElementById('cartDiscountSelectTrigger');
-            if (trigger) trigger.textContent = label;
-            const dropdown = document.getElementById('cartDiscountSelectDropdown');
-            if (dropdown) dropdown.classList.remove('show');
-            const valueInput = document.getElementById('cartDiscountValue');
-            if (valueInput) {
-                if (type === 'percent') {
-                    valueInput.placeholder = '%';
-                    valueInput.step = 1;
-                } else if (type === 'fixed') {
-                    valueInput.placeholder = '₽';
-                    valueInput.step = 100;
-                } else {
-                    valueInput.disabled = true;
-                    valueInput.value = 0;
-                }
-                if (type !== 'none') {
-                    valueInput.disabled = false;
-                }
-            }
-            updateCartUI();
-        }
-
-        function changeDiscountValue(delta) {
-            const input = document.getElementById('cartDiscountValue');
-            if (input && cartDiscount.type !== 'none') {
-                let val = parseFloat(input.value) || 0;
-                let step = (cartDiscount.type === 'percent') ? 1 : 100;
-                val = Math.max(0, val + delta * step);
-                input.value = val;
-                cartDiscount.value = val;
-                updateCartUI();
-            }
-        }
-
-        function updateCartDiscountFromInput() {
-            const input = document.getElementById('cartDiscountValue');
-            if (input && cartDiscount.type !== 'none') {
-                cartDiscount.value = parseFloat(input.value) || 0;
-                updateCartUI();
-            }
-        }
-
-        function resetCartDiscount() {
-            cartDiscount = {
-                type: 'none',
-                value: 0
-            };
-            const trigger = document.getElementById('cartDiscountSelectTrigger');
-            if (trigger) trigger.textContent = 'Без скидки';
-            const valueInput = document.getElementById('cartDiscountValue');
-            if (valueInput) {
-                valueInput.value = 0;
-                valueInput.disabled = true;
-            }
-            updateCartUI();
-            showToast("Скидка на корзину сброшена", true);
-        }
-
         // Кастомный селект для типа скидки на товары
         function toggleItemDiscountSelect() {
             const dropdown = document.getElementById('itemDiscountSelectDropdown');
-            if (dropdown) {
-                const cartDropdown = document.getElementById('cartDiscountSelectDropdown');
-                if (cartDropdown) cartDropdown.classList.remove('show');
-                dropdown.classList.toggle('show');
-            }
+            if (dropdown) dropdown.classList.toggle('show');
         }
 
         function selectItemDiscountType(type, label) {
@@ -2576,20 +2557,22 @@
             if (discountProductListVisible) renderProductDiscountList();
         }
 
-        // Применение скидки (для всей корзины ИЛИ для выбранных товаров)
-        function applyDiscount() {
-            // Если есть скидка на всю корзину
-            if (cartDiscount.type !== 'none' && cartDiscount.value > 0) {
-                let discountText = cartDiscount.type === 'percent' 
-                    ? `${cartDiscount.value}%` 
-                    : `${cartDiscount.value} ₽`;
-                showToast(`Скидка ${discountText} применена ко всей корзине`, true);
-                closeDiscountPanel();
-                updateCartUI();
-                return;
+        // Выбрать все товары в корзине
+        function selectAllProductsForDiscount() {
+            selectedDiscountProducts.clear();
+            for (const [idxStr, qty] of Object.entries(cart)) {
+                if (qty > 0) {
+                    const idx = parseInt(idxStr);
+                    const card = originalCardsData[idx];
+                    if (card) selectedDiscountProducts.add(card.name);
+                }
             }
-            
-            // Иначе применяем скидку на выбранные товары
+            renderProductDiscountList();
+            showToast(`Выбрано ${selectedDiscountProducts.size} товаров`, true);
+        }
+
+        // Применение скидки на выбранные товары
+        function applyItemDiscount() {
             const typeSelect = document.getElementById('itemDiscountTypeSelect');
             const type = typeSelect ? typeSelect.getAttribute('data-value') || 'percent' : 'percent';
             const value = parseFloat(document.getElementById('itemDiscountValue').value) || 0;
@@ -2694,7 +2677,6 @@
             saveExtraCosts();
             if (document.getElementById('statsModal')?.style.display === 'block') renderStats();
         }
-
         // ========== ИСТОРИЯ ==========
         let salesHistory = [];
         let historyMethodFilter = "all";
@@ -3093,7 +3075,6 @@
             }
             container.innerHTML = html;
         }
-
         // ========== ФУНКЦИИ ПРАВИЛ (UI) ==========
         function selectRuleType(type) {
             currentRuleType = type;
@@ -3397,7 +3378,6 @@
             }
             return activeRules;
         }
-
         // ========== СТАТИСТИКА ==========
         function openStatsModal() {
             const modal = document.getElementById('statsModal');
@@ -3513,24 +3493,97 @@
                     <div class="stats-card"><div class="stats-card-value">${formatCurrency(averageCheck)}</div><div class="stats-card-label">💳 Средний чек</div></div>
                 </div>
                 <div class="stats-summary-compact"><div class="stats-summary-value ${profitMargin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(profitMargin)}</div><div class="stats-summary-label">Рентабельность продаж</div></div>
-                <div class="detail-section"><div class="detail-title">📦 Детализация по товарам</div><table class="detail-table"><thead><tr><th>Товар</th><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>
-                    ${productDetails.map(p => `<tr><td>${escapeHtml(p.name)}</td><td><span class="type-badge" style="background:${getTypeColor(p.type)}20; color:${getTypeColor(p.type)};">${escapeHtml(p.type)}</span></td><td class="text-right">${p.qty} шт</td><td class="text-right">${formatCurrency(p.revenue)}</td><td class="text-right">${formatCurrency(p.totalCost)}</td><td class="text-right ${p.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(p.profit)}</td><td class="text-right ${p.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(p.margin)}</td></tr>`).join('')}
-                </tbody></table></div>
-                <div class="detail-section"><div class="detail-title">🏷️ Детализация по типам мерча</div><table class="detail-table"><thead><tr><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>
-                    ${typeDetails.map(t => `<td><td><span class="type-badge" style="background:${getTypeColor(t.type)}20; color:${getTypeColor(t.type)};">${escapeHtml(t.type)}</span></td><td class="text-right">${t.qty} шт</td><td class="text-right">${formatCurrency(t.revenue)}</td><td class="text-right">${formatCurrency(t.totalCost)}</td><td class="text-right ${t.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(t.profit)}</td><td class="text-right ${t.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(t.margin)}</td></tr>`).join('')}
-                </tbody></table></div>
-                <div class="two-columns">
-                    <div class="detail-section"><div class="detail-title">🏆 Самые популярные товары</div><table class="detail-table"><thead><tr><th>#</th><th>Товар</th><th>Тип</th><th class="text-right">Продано, шт</th></tr></thead><tbody>
-                        ${topByQty.map(([name, data], idx) => `<tr><td class="text-right"><span class="popular-badge">${idx+1}</span></td><td>${escapeHtml(name)}</td><td><span class="type-badge" style="background:${getTypeColor(data.type)}20; color:${getTypeColor(data.type)};">${escapeHtml(data.type)}</span></td><td class="text-right">${data.qty} шт</td></tr>`).join('')}
-                    </tbody></table></div>
-                    <div class="detail-section"><div class="detail-title">🏆 Самые популярные типы мерча</div><table class="detail-table"><thead><tr><th>#</th><th>Тип</th><th class="text-right">Продано, шт</th></tr></thead><tbody>
-                        ${topTypesByQty.map(([type, data], idx) => `<tr><td class="text-right"><span class="popular-badge">${idx+1}</span></td><td><span class="type-badge" style="background:${getTypeColor(type)}20; color:${getTypeColor(type)};">${escapeHtml(type)}</span></td><td class="text-right">${data.qty} шт</td></tr>`).join('')}
-                    </tbody></table></div>
+                <div class="detail-section"><div class="detail-title">📦 Детализация по товарам</div>
+                <table class="detail-table">
+                    <thead>
+                        <tr><th>Товар</th><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr>
+                    </thead>
+                    <tbody>
+                        ${productDetails.map(p => `
+                            <tr>
+                                <td>${escapeHtml(p.name)}</td>
+                                <td><span class="type-badge" style="background:${getTypeColor(p.type)}20; color:${getTypeColor(p.type)};">${escapeHtml(p.type)}</span></td>
+                                <td class="text-right">${p.qty} шт</td>
+                                <td class="text-right">${formatCurrency(p.revenue)}</td>
+                                <td class="text-right">${formatCurrency(p.totalCost)}</td>
+                                <td class="text-right ${p.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(p.profit)}</td>
+                                <td class="text-right ${p.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(p.margin)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
                 </div>
-                <div class="extra-costs-section"><div class="detail-title">➕ Дополнительные расходы</div><div id="extra-costs-list">
+                <div class="detail-section"><div class="detail-title">🏷️ Детализация по типам мерча</div>
+                <table class="detail-table">
+                    <thead>
+                        <tr><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Себест.</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr>
+                    </thead>
+                    <tbody>
+                        ${typeDetails.map(t => `
+                            <tr>
+                                <td><span class="type-badge" style="background:${getTypeColor(t.type)}20; color:${getTypeColor(t.type)};">${escapeHtml(t.type)}</span></td>
+                                <td class="text-right">${t.qty} шт</td>
+                                <td class="text-right">${formatCurrency(t.revenue)}</td>
+                                <td class="text-right">${formatCurrency(t.totalCost)}</td>
+                                <td class="text-right ${t.profit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCurrency(t.profit)}</td>
+                                <td class="text-right ${t.margin >= 0 ? 'profit-positive' : 'profit-negative'}">${formatPercent(t.margin)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                </div>
+                <div class="two-columns">
+                    <div class="detail-section"><div class="detail-title">🏆 Самые популярные товары</div>
+                    <table class="detail-table">
+                        <thead>
+                            <tr><th>#</th><th>Товар</th><th>Тип</th><th class="text-right">Продано, шт</th></tr>
+                        </thead>
+                        <tbody>
+                            ${topByQty.map(([name, data], idx) => `
+                                <tr>
+                                    <td class="text-right"><span class="popular-badge">${idx + 1}</span></td>
+                                    <td>${escapeHtml(name)}</td>
+                                    <td><span class="type-badge" style="background:${getTypeColor(data.type)}20; color:${getTypeColor(data.type)};">${escapeHtml(data.type)}</span></td>
+                                    <td class="text-right">${data.qty} шт</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="detail-section"><div class="detail-title">🏆 Самые популярные типы мерча</div>
+                    <table class="detail-table">
+                        <thead>
+                            <tr><th>#</th><th>Тип</th><th class="text-right">Продано, шт</th></tr>
+                        </thead>
+                        <tbody>
+                            ${topTypesByQty.map(([type, data], idx) => `
+                                <tr>
+                                    <td class="text-right"><span class="popular-badge">${idx + 1}</span></td>
+                                    <td><span class="type-badge" style="background:${getTypeColor(type)}20; color:${getTypeColor(type)};">${escapeHtml(type)}</span></td>
+                                    <td class="text-right">${data.qty} шт</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+                <div class="extra-costs-section"><div class="detail-title">➕ Дополнительные расходы</div>
+                <div id="extra-costs-list">
                     ${extraCosts.length === 0 ? '<div style="color: var(--text-muted); text-align: center; padding: 12px;">Нет дополнительных расходов</div>' : ''}
-                    ${extraCosts.map((cost, idx) => `<div class="extra-cost-item"><span class="extra-cost-name">${escapeHtml(cost.name)}</span><span class="extra-cost-amount">${cost.amount} ₽</span><button class="extra-cost-delete" onclick="deleteExtraCost(${idx})">🗑</button></div>`).join('')}
-                </div><div class="add-cost-form"><input type="text" id="newCostName" class="add-cost-input" placeholder="Название (стол, доставка...)" autocomplete="off"><input type="number" id="newCostAmount" class="add-cost-input-number" placeholder="Сумма" value="0" step="100"><button class="add-cost-btn" onclick="addExtraCostFromModal()">➕ Добавить</button></div></div>
+                    ${extraCosts.map((cost, idx) => `
+                        <div class="extra-cost-item">
+                            <span class="extra-cost-name">${escapeHtml(cost.name)}</span>
+                            <span class="extra-cost-amount">${cost.amount} ₽</span>
+                            <button class="extra-cost-delete" onclick="deleteExtraCost(${idx})">🗑</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="add-cost-form">
+                    <input type="text" id="newCostName" class="add-cost-input" placeholder="Название (стол, доставка...)" autocomplete="off">
+                    <input type="number" id="newCostAmount" class="add-cost-input-number" placeholder="Сумма" value="0" step="100">
+                    <button class="add-cost-btn" onclick="addExtraCostFromModal()">➕ Добавить</button>
+                </div>
+                </div>
             `;
             container.innerHTML = html;
         }
@@ -3549,7 +3602,6 @@
             if (amountInput) amountInput.value = '0';
             renderStats();
         }
-
         // ========== КОРЗИНА ==========
         let cart = {};
 
@@ -3593,8 +3645,8 @@
         function getBestDiscountForItem(idx, originalPrice, qty, subtotal) {
             let finalPrice = originalPrice;
             let discountPercent = 0;
-            
-            // Сначала скидка на конкретный товар
+
+            // Скидка на конкретный товар
             if (itemDiscounts[idx]) {
                 const disc = itemDiscounts[idx];
                 if (disc.type === 'percent') {
@@ -3606,29 +3658,7 @@
                     discountPercent = ((originalPrice - finalPrice) / originalPrice) * 100;
                 }
             }
-            
-            // Затем скидка на всю корзину (если она больше)
-            if (cartDiscount.type !== 'none' && cartDiscount.value > 0) {
-                let cartDiscountedPrice = originalPrice;
-                let cartDiscountPercent = 0;
-                
-                if (cartDiscount.type === 'percent') {
-                    cartDiscountedPrice = originalPrice * (1 - cartDiscount.value / 100);
-                    cartDiscountPercent = cartDiscount.value;
-                } else if (cartDiscount.type === 'fixed' && subtotal > 0) {
-                    const ratio = (originalPrice * qty) / subtotal;
-                    const discountPerItem = (cartDiscount.value * ratio) / qty;
-                    cartDiscountedPrice = Math.max(0, originalPrice - discountPerItem);
-                    cartDiscountPercent = ((originalPrice - cartDiscountedPrice) / originalPrice) * 100;
-                }
-                
-                // Выбираем наибольшую скидку
-                if (cartDiscountPercent > discountPercent) {
-                    finalPrice = cartDiscountedPrice;
-                    discountPercent = cartDiscountPercent;
-                }
-            }
-            
+
             return { price: finalPrice, discountPercent: Math.round(discountPercent) };
         }
 
@@ -3640,15 +3670,15 @@
             const cartTotalDiv = document.getElementById('cart-total');
             const cartActionsDiv = document.getElementById('cart-actions');
             const discountPanel = document.getElementById('discount-panel');
-            
+
             if (!cartItemsDiv) return;
             const hasAny = Object.keys(cart).length > 0;
-            
+
             // Показываем/скрываем панель скидок
             if (discountPanel) {
                 discountPanel.style.display = hasAny ? 'block' : 'none';
             }
-            
+
             if (!hasAny) {
                 cartItemsDiv.innerHTML = '<div class="empty-cart">🍌 Корзина пуста</div>';
                 if (cartTotalDiv) cartTotalDiv.style.display = 'none';
@@ -3666,25 +3696,6 @@
                     </div>
                     <div id="discount-content" class="discount-content" style="display: none;">
                         <div class="discount-group">
-                            <div class="discount-group-title">Скидка на всю корзину</div>
-                            <div class="discount-row">
-                                <div class="discount-custom-select">
-                                    <div class="discount-custom-select-trigger" id="cartDiscountSelectTrigger" onclick="event.stopPropagation(); toggleCartDiscountSelect()">${cartDiscount.type === 'none' ? 'Без скидки' : (cartDiscount.type === 'percent' ? '%' : '₽')}</div>
-                                    <div class="discount-custom-select-dropdown" id="cartDiscountSelectDropdown">
-                                        <div class="discount-select-option" onclick="selectCartDiscountType('none', 'Без скидки')">Без скидки</div>
-                                        <div class="discount-select-option" onclick="selectCartDiscountType('percent', '%')">%</div>
-                                        <div class="discount-select-option" onclick="selectCartDiscountType('fixed', '₽')">₽</div>
-                                    </div>
-                                </div>
-                                <div class="discount-amount-control">
-                                    <input type="number" id="cartDiscountValue" class="discount-amount-input" value="${cartDiscount.value}" onchange="updateCartDiscountFromInput()" step="${cartDiscount.type === 'percent' ? 1 : 100}" ${cartDiscount.type === 'none' ? 'disabled' : ''}>
-                                    <button class="discount-step-btn" onclick="changeDiscountValue(-1)">−</button>
-                                    <button class="discount-step-btn" onclick="changeDiscountValue(1)">+</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="discount-group">
                             <div class="discount-group-title">Скидка на отдельные товары</div>
                             <div class="discount-row">
                                 <div class="discount-custom-select">
@@ -3697,14 +3708,15 @@
                                 </div>
                                 <input type="number" id="itemDiscountValue" class="discount-amount-input" placeholder="Сумма" value="0" step="100">
                                 <button class="discount-products-btn" onclick="toggleDiscountProductsList()">Товары</button>
+                                <button class="discount-all-btn" onclick="selectAllProductsForDiscount()">Всё</button>
                             </div>
                             <div id="productDiscountList" style="display: none; margin-top: 8px;"></div>
                         </div>
 
                         <div class="discount-buttons-row">
-                            <button class="discount-action-btn apply-btn" onclick="applyDiscount()">Применить</button>
                             <button class="discount-action-btn cancel-btn" onclick="closeDiscountPanel()">Отмена</button>
-                            <button class="discount-action-btn reset-btn" onclick="resetCartDiscount(); resetItemDiscounts();">Сбросить скидки</button>
+                            <button class="discount-action-btn reset-btn" onclick="resetItemDiscounts()">Сбросить скидки</button>
+                            <button class="discount-action-btn apply-btn" onclick="applyItemDiscount()">Применить</button>
                         </div>
                     </div>
                 </div>
@@ -3714,7 +3726,7 @@
             const activeRules = checkRulesForCart();
             let total = 0;
             let html = '';
-            
+
             if (activeRules.length > 0) {
                 html += `<div style="background: var(--badge-bg); border-radius: 16px; padding: 12px; margin-bottom: 16px; border-left: 4px solid var(--btn-bg);">
                             <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--badge-text);">✨ Активные правила ✨</div>`;
@@ -3738,12 +3750,12 @@
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
                 if (!card) continue;
-                
+
                 const best = getBestDiscountForItem(idx, card.price, qty, subtotal);
                 const itemTotal = best.price * qty;
                 total += itemTotal;
                 const isZero = qty === 0;
-                
+
                 html += `<div class="cart-item ${isZero ? 'disabled' : ''}">
                             <div class="cart-item-info">
                                 <div class="cart-item-name">${escapeHtml(card.name)}</div>
@@ -3761,7 +3773,7 @@
             cartItemsDiv.innerHTML = html;
             if (cartTotalDiv) {
                 cartTotalDiv.style.display = 'block';
-                cartTotalDiv.innerHTML = `🍌 Итого: ${total.toFixed(2)} ₽`;
+                cartTotalDiv.innerHTML = `🍌 Итого: ${Math.max(0, total).toFixed(2)} ₽`;
             }
             if (cartActionsDiv && totalPositiveCount > 0) cartActionsDiv.style.display = 'flex';
             else if (cartActionsDiv) cartActionsDiv.style.display = 'none';
@@ -3809,11 +3821,87 @@
 
         function clearCart() {
             cart = {};
-            cartDiscount = { type: 'none', value: 0 };
             itemDiscounts = {};
             selectedDiscountProducts.clear();
             updateCartUI();
             showToast(`Корзина очищена`, true);
+        }
+
+        // Подарок (списание товаров с ценой 0)
+        function giftCart() {
+            const items = Object.entries(cart).filter(([_, qty]) => qty > 0);
+            if (items.length === 0) {
+                showToast("Нет товаров для подарка", false);
+                return;
+            }
+
+            for (const [idxStr, qty] of items) {
+                const idx = parseInt(idxStr);
+                const card = originalCardsData[idx];
+                if (qty > card.stock) {
+                    showToast(`Не хватает "${card.name}" (нужно ${qty}, есть ${card.stock})`, false);
+                    return;
+                }
+            }
+
+            // Добавляем в историю как подарок (цена 0)
+            const historyItems = items.map(([idxStr, qty]) => {
+                const idx = parseInt(idxStr);
+                const card = originalCardsData[idx];
+                return {
+                    name: card.name,
+                    qty: qty,
+                    price: 0
+                };
+            });
+            addToHistory(historyItems, 0, 'gift', false);
+
+            const cartCopy = { ...cart };
+            closeCartModal();
+            cart = {};
+            itemDiscounts = {};
+            selectedDiscountProducts.clear();
+            updateCartUI();
+
+            for (const [idxStr, qty] of Object.entries(cartCopy)) {
+                if (qty === 0) continue;
+                const idx = parseInt(idxStr);
+                const card = originalCardsData[idx];
+                const newStock = card.stock - qty;
+                card.stock = newStock;
+
+                const cards = document.querySelectorAll('.card');
+                let targetCard = null;
+                for (let i = 0; i < cards.length; i++) {
+                    const minusBtn = cards[i].querySelector('.minus');
+                    if (minusBtn && parseInt(minusBtn.dataset.index) === idx) {
+                        targetCard = cards[i];
+                        break;
+                    }
+                }
+                if (targetCard) {
+                    const stockSpan = targetCard.querySelector('.stock');
+                    if (stockSpan) stockSpan.textContent = `Остаток: ${newStock} шт`;
+                    if (newStock === 0) targetCard.classList.add('out-of-stock');
+                    else targetCard.classList.remove('out-of-stock');
+                }
+            }
+
+            (async () => {
+                for (const [idxStr, qty] of Object.entries(cartCopy)) {
+                    if (qty === 0) continue;
+                    const idx = parseInt(idxStr);
+                    for (let i = 0; i < qty; i++) {
+                        try {
+                            await fetch(`${API_URL}?action=update&row=${idx}&delta=-1&t=${Date.now()}`);
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
+                }
+                showUpdateTime();
+            })();
+            showToast(`Подарок оформлен!`, true);
         }
 
         function openCartModal() {
@@ -3833,7 +3921,6 @@
             const modal = document.getElementById('cartModal');
             if (modal) modal.style.display = 'none';
         }
-
         async function updateStock(index, delta, silent = false) {
             const card = originalCardsData[index];
             if (!card) return;
@@ -3876,30 +3963,21 @@
                 showToast("Нет товаров для продажи", false);
                 return;
             }
-            
+
             let subtotal = 0;
             for (const [idxStr, qty] of items) {
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
                 subtotal += qty * card.price;
             }
-            
-            let total = subtotal;
-            if (cartDiscount.type === 'percent' && cartDiscount.value > 0) {
-                total = subtotal * (1 - cartDiscount.value / 100);
-            } else if (cartDiscount.type === 'fixed' && cartDiscount.value > 0) {
-                total = Math.max(0, subtotal - cartDiscount.value);
-            }
-            
-            // Также применяем скидки на отдельные товары
-            let finalTotal = 0;
+
+            let total = 0;
             for (const [idxStr, qty] of items) {
                 const idx = parseInt(idxStr);
                 const card = originalCardsData[idx];
                 const best = getBestDiscountForItem(idx, card.price, qty, subtotal);
-                finalTotal += best.price * qty;
+                total += best.price * qty;
             }
-            total = finalTotal;
 
             for (const [idxStr, qty] of items) {
                 const idx = parseInt(idxStr);
@@ -3931,7 +4009,6 @@
             const cartCopy = { ...cart };
             closeCartModal();
             cart = {};
-            cartDiscount = { type: 'none', value: 0 };
             itemDiscounts = {};
             selectedDiscountProducts.clear();
             updateCartUI();
@@ -3942,6 +4019,7 @@
                 const card = originalCardsData[idx];
                 const newStock = card.stock - qty;
                 card.stock = newStock;
+
                 const cards = document.querySelectorAll('.card');
                 let targetCard = null;
                 for (let i = 0; i < cards.length; i++) {
@@ -3973,7 +4051,7 @@
                 }
                 showUpdateTime();
             })();
-            showToast(`Продажа на ${total.toFixed(2)} ₽ завершена!`, true);
+            showToast(`Продажа на ${Math.max(0, total).toFixed(2)} ₽ завершена!`, true);
         }
 
         // ========== ФИЛЬТР ТИПОВ ==========
@@ -4065,125 +4143,136 @@
             });
         }
 
-        // ========== ОСТАЛЬНОЙ КОД ==========
-        function initTheme() {
-            const savedTheme = localStorage.getItem('merch_theme');
-            const themeToggle = document.getElementById('themeToggle');
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark');
-                if (themeToggle) themeToggle.textContent = '☀️';
-            } else {
-                document.body.classList.remove('dark');
-                if (themeToggle) themeToggle.textContent = '🌙';
+        // ========== СОРТИРОВКА ==========
+        function saveCustomOrder() {
+            const order = [];
+            document.querySelectorAll('#cards-container .card').forEach(card => {
+                const name = card.querySelector('.name')?.textContent;
+                if (name) {
+                    const originalCard = originalCardsData.find(c => c.name === name);
+                    if (originalCard) {
+                        order.push(originalCardsData.findIndex(c => c.name === name));
+                    }
+                }
+            });
+            if (order.length === originalCardsData.length) {
+                customOrder = order;
+                localStorage.setItem('merch_custom_order', JSON.stringify(customOrder));
             }
         }
 
-        function toggleTheme() {
-            const themeToggle = document.getElementById('themeToggle');
-            if (document.body.classList.contains('dark')) {
-                document.body.classList.remove('dark');
-                localStorage.setItem('merch_theme', 'light');
-                if (themeToggle) themeToggle.textContent = '🌙';
+        function loadCustomOrder() {
+            const saved = localStorage.getItem('merch_custom_order');
+            if (saved) {
+                try {
+                    customOrder = JSON.parse(saved);
+                } catch (e) {
+                    customOrder = [];
+                }
             } else {
-                document.body.classList.add('dark');
-                localStorage.setItem('merch_theme', 'dark');
-                if (themeToggle) themeToggle.textContent = '☀️';
+                customOrder = [];
             }
         }
 
-        function initSortSelect() {
-            const sortTrigger = document.getElementById('sortByTrigger');
-            const sortDropdown = document.getElementById('sortByDropdown');
-            const sortOptions = [
-                { value: "none", label: "Без сортировки" },
-                { value: "name", label: "По названию" },
-                { value: "stock", label: "По остатку: сначала мало" },
-                { value: "stockDesc", label: "По остатку: сначала много" },
-                { value: "priceAsc", label: "По цене: сначала дешёвое" },
-                { value: "priceDesc", label: "По цене: сначала дорогое" },
-                { value: "type", label: "По типу" }
-            ];
+        function applyCustomOrder(data) {
+            if (!customOrder.length || customOrder.length !== data.length) {
+                return data;
+            }
+            const ordered = [];
+            for (const idx of customOrder) {
+                if (data[idx]) ordered.push(data[idx]);
+            }
+            for (const item of data) {
+                if (!ordered.includes(item)) ordered.push(item);
+            }
+            return ordered;
+        }
 
-            function buildSortDropdown() {
-                sortDropdown.innerHTML = '';
-                const header = document.createElement('div');
-                header.className = 'filter-option-header';
-                header.textContent = 'Выберите сортировку';
-                sortDropdown.appendChild(header);
-                sortOptions.forEach(opt => {
-                    const div = document.createElement('div');
-                    div.className = 'sort-option';
-                    if (currentSortBy === opt.value) div.classList.add('active');
-                    div.textContent = opt.label;
-                    div.onclick = (e) => {
-                        e.stopPropagation();
-                        document.querySelectorAll('.sort-option').forEach(optDiv => optDiv.classList.remove('active'));
-                        div.classList.add('active');
-                        currentSortBy = opt.value;
-                        sortTrigger.textContent = opt.label;
-                        filterAndSort();
-                        sortDropdown.classList.remove('show');
-                    };
-                    sortDropdown.appendChild(div);
+        // Функции для перетаскивания
+        function dragStartHandler(e, index) {
+            dragStartIndex = index;
+            e.target.closest('.card')?.classList.add('dragging');
+        }
+
+        function dragEndHandler(e) {
+            e.target.closest('.card')?.classList.remove('dragging');
+            dragStartIndex = null;
+        }
+
+        function dragOverHandler(e) {
+            e.preventDefault();
+            const card = e.target.closest('.card');
+            if (card) card.classList.add('drag-over');
+        }
+
+        function dragLeaveHandler(e) {
+            const card = e.target.closest('.card');
+            if (card) card.classList.remove('drag-over');
+        }
+
+        function dropHandler(e, dropIndex) {
+            e.preventDefault();
+            const card = e.target.closest('.card');
+            if (card) card.classList.remove('drag-over');
+
+            if (dragStartIndex !== null && dragStartIndex !== dropIndex && currentSortBy === 'custom') {
+                const cards = [...currentFilteredData];
+                const [movedCard] = cards.splice(dragStartIndex, 1);
+                cards.splice(dropIndex, 0, movedCard);
+                currentFilteredData = cards;
+                renderCards();
+
+                const newOrder = [];
+                currentFilteredData.forEach(card => {
+                    const originalIndex = originalCardsData.findIndex(orig => orig.name === card.name && orig.type === card.type);
+                    if (originalIndex !== -1) newOrder.push(originalIndex);
                 });
+                customOrder = newOrder;
+                localStorage.setItem('merch_custom_order', JSON.stringify(customOrder));
             }
-
-            function closeSortDropdown() {
-                sortDropdown.classList.remove('show');
-            }
-            sortTrigger.onclick = (e) => {
-                e.stopPropagation();
-                sortDropdown.classList.toggle('show');
-            };
-            document.addEventListener('click', () => closeSortDropdown());
-            buildSortDropdown();
+            dragStartIndex = null;
         }
-
-        function initCustomSelects() {
-            initSortSelect();
-            const typeTrigger = document.getElementById('typeFilterTrigger');
-            const typeDropdown = document.getElementById('typeFilterDropdown');
-
-            function closeTypeDropdown() {
-                typeDropdown.classList.remove('show');
-            }
-            typeTrigger.onclick = (e) => {
-                e.stopPropagation();
-                typeDropdown.classList.toggle('show');
-                buildTypeMultiSelect();
-            };
-            document.addEventListener('click', (e) => {
-                if (!typeTrigger.contains(e.target) && !typeDropdown.contains(e.target)) closeTypeDropdown();
-            });
-        }
-
-        function updateTypeOptions() {
-            const types = new Set();
-            originalCardsData.forEach(card => {
-                if (card.type && card.type.trim()) types.add(card.type);
-            });
-            typeOptions = Array.from(types).sort();
-            selectedTypes.forEach(type => {
-                if (!typeOptions.includes(type)) selectedTypes.delete(type);
-            });
-            updateTypeFilterTrigger();
-        }
-
         function filterAndSort() {
             let filtered = [...originalCardsData];
+
             const searchText = document.getElementById('searchInput')?.value.toLowerCase() || '';
-            if (searchText) filtered = filtered.filter(card => card.name.toLowerCase().includes(searchText));
-            if (selectedTypes.size > 0) filtered = filtered.filter(card => selectedTypes.has(card.type));
-            if (currentSortBy !== 'none') {
-                switch (currentSortBy) {
-                    case 'name': filtered.sort((a, b) => a.name.localeCompare(b.name)); break;
-                    case 'stock': filtered.sort((a, b) => (a.stock || 0) - (b.stock || 0)); break;
-                    case 'stockDesc': filtered.sort((a, b) => (b.stock || 0) - (a.stock || 0)); break;
-                    case 'priceAsc': filtered.sort((a, b) => (a.price || 0) - (b.price || 0)); break;
-                    case 'priceDesc': filtered.sort((a, b) => (b.price || 0) - (a.price || 0)); break;
-                    case 'type': filtered.sort((a, b) => (a.type || '').localeCompare(b.type || '')); break;
-                }
+            if (searchText) {
+                filtered = filtered.filter(card => card.name.toLowerCase().includes(searchText));
             }
+
+            if (selectedTypes.size > 0) {
+                filtered = filtered.filter(card => selectedTypes.has(card.type));
+            }
+
+            // Применяем сортировку
+            if (currentSortBy !== 'none' && currentSortBy !== 'custom') {
+                switch (currentSortBy) {
+                    case 'name':
+                        filtered.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    case 'stock':
+                        filtered.sort((a, b) => (a.stock || 0) - (b.stock || 0));
+                        break;
+                    case 'stockDesc':
+                        filtered.sort((a, b) => (b.stock || 0) - (a.stock || 0));
+                        break;
+                    case 'priceAsc':
+                        filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+                        break;
+                    case 'priceDesc':
+                        filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+                        break;
+                    case 'type':
+                        filtered.sort((a, b) => (a.type || '').localeCompare(b.type || ''));
+                        break;
+                    case 'relevance':
+                        // По релевантности (по умолчанию оставляем как есть)
+                        break;
+                }
+            } else if (currentSortBy === 'custom') {
+                filtered = applyCustomOrder(filtered);
+            }
+
             currentFilteredData = filtered;
             renderCards();
         }
@@ -4192,11 +4281,13 @@
             const container = document.getElementById('cards-container');
             if (!container) return;
             container.innerHTML = '';
+
             if (currentFilteredData.length === 0) {
                 container.innerHTML = '<div class="loading">🍌 Ни одного бананчика не найдено 🍌</div>';
                 return;
             }
-            currentFilteredData.forEach((card) => {
+
+            currentFilteredData.forEach((card, displayIndex) => {
                 const originalIndex = originalCardsData.findIndex(orig => orig.name === card.name && orig.type === card.type);
                 const type = card.type || "";
                 const name = card.name || "Без названия";
@@ -4205,13 +4296,26 @@
                 const price = typeof card.price === 'number' ? card.price : 0;
                 const isOutOfStock = stock === 0;
                 const typeColor = type ? getTypeColor(type) : '#c25d1a';
+
                 const cardDiv = document.createElement('div');
                 cardDiv.className = `card ${isOutOfStock ? 'out-of-stock' : ''}`;
                 cardDiv.style.position = 'relative';
+                cardDiv.setAttribute('draggable', currentSortBy === 'custom');
+                cardDiv.setAttribute('data-index', displayIndex);
+
+                if (currentSortBy === 'custom') {
+                    cardDiv.addEventListener('dragstart', (e) => dragStartHandler(e, displayIndex));
+                    cardDiv.addEventListener('dragend', dragEndHandler);
+                    cardDiv.addEventListener('dragover', dragOverHandler);
+                    cardDiv.addEventListener('dragleave', dragLeaveHandler);
+                    cardDiv.addEventListener('drop', (e) => dropHandler(e, displayIndex));
+                }
+
                 cardDiv.innerHTML = `
                     <div class="info">
                         <div class="title-row">
                             ${type ? `<span class="type-badge" style="background: ${typeColor}20; color: ${typeColor}; border: 1px solid ${typeColor}40;">${escapeHtml(type)}</span>` : ''}
+                            ${currentSortBy === 'custom' ? '<span class="sort-handle">⋮⋮</span>' : ''}
                             <span class="name">${escapeHtml(name)}</span>
                         </div>
                         <div class="stock-row">
@@ -4233,6 +4337,7 @@
                 `;
                 container.appendChild(cardDiv);
             });
+
             document.querySelectorAll('.minus, .plus').forEach(btn => {
                 btn.removeEventListener('click', handleButtonClick);
                 btn.addEventListener('click', handleButtonClick);
@@ -4255,6 +4360,99 @@
             const index = parseInt(btn.dataset.index);
             const delta = parseInt(btn.dataset.delta);
             await updateStock(index, delta);
+        }
+
+        function initSortSelect() {
+            const sortTrigger = document.getElementById('sortByTrigger');
+            const sortDropdown = document.getElementById('sortByDropdown');
+
+            const sortOptions = [
+                { value: "none", label: "Без сортировки" },
+                { value: "relevance", label: "По релевантности" },
+                { value: "name", label: "По названию" },
+                { value: "stock", label: "По остатку: сначала мало" },
+                { value: "stockDesc", label: "По остатку: сначала много" },
+                { value: "priceAsc", label: "По цене: сначала дешёвое" },
+                { value: "priceDesc", label: "По цене: сначала дорогое" },
+                { value: "type", label: "По типу" },
+                { value: "custom", label: "Пользовательская" }
+            ];
+
+            function buildSortDropdown() {
+                sortDropdown.innerHTML = '';
+                const header = document.createElement('div');
+                header.className = 'filter-option-header';
+                header.textContent = 'Выберите сортировку';
+                sortDropdown.appendChild(header);
+
+                sortOptions.forEach(opt => {
+                    const div = document.createElement('div');
+                    div.className = 'sort-option';
+                    if (currentSortBy === opt.value) div.classList.add('active');
+                    div.textContent = opt.label;
+                    div.onclick = (e) => {
+                        e.stopPropagation();
+                        document.querySelectorAll('.sort-option').forEach(optDiv => optDiv.classList.remove('active'));
+                        div.classList.add('active');
+                        currentSortBy = opt.value;
+                        sortTrigger.textContent = opt.label;
+
+                        if (currentSortBy === 'custom') {
+                            loadCustomOrder();
+                        }
+
+                        filterAndSort();
+                        sortDropdown.classList.remove('show');
+                    };
+                    sortDropdown.appendChild(div);
+                });
+            }
+
+            function closeSortDropdown() {
+                sortDropdown.classList.remove('show');
+            }
+
+            sortTrigger.onclick = (e) => {
+                e.stopPropagation();
+                sortDropdown.classList.toggle('show');
+            };
+            document.addEventListener('click', () => closeSortDropdown());
+            buildSortDropdown();
+        }
+
+        function initCustomSelects() {
+            initSortSelect();
+
+            const typeTrigger = document.getElementById('typeFilterTrigger');
+            const typeDropdown = document.getElementById('typeFilterDropdown');
+
+            function closeTypeDropdown() {
+                typeDropdown.classList.remove('show');
+            }
+
+            typeTrigger.onclick = (e) => {
+                e.stopPropagation();
+                typeDropdown.classList.toggle('show');
+                buildTypeMultiSelect();
+            };
+
+            document.addEventListener('click', (e) => {
+                if (!typeTrigger.contains(e.target) && !typeDropdown.contains(e.target)) {
+                    closeTypeDropdown();
+                }
+            });
+        }
+
+        function updateTypeOptions() {
+            const types = new Set();
+            originalCardsData.forEach(card => {
+                if (card.type && card.type.trim()) types.add(card.type);
+            });
+            typeOptions = Array.from(types).sort();
+            selectedTypes.forEach(type => {
+                if (!typeOptions.includes(type)) selectedTypes.delete(type);
+            });
+            updateTypeFilterTrigger();
         }
 
         function showUpdateTime() {
@@ -4298,6 +4496,7 @@
             if (isLoading) return;
             isLoading = true;
             const isAutoRefresh = showProgress && !showLoading;
+
             if (!isAutoRefresh) {
                 const autoRefreshBadge = document.querySelector('.auto-refresh-badge');
                 if (autoRefreshBadge) {
@@ -4310,9 +4509,11 @@
                     if (container) container.innerHTML = '<div class="loading">Загрузка бананчиков... 🍌</div>';
                 }
             }
+
             try {
                 const response = await fetch(API_URL + "?action=get&t=" + Date.now());
                 const data = await response.json();
+
                 if (data && data.length > 0) {
                     originalCardsData = data;
                     updateTypeOptions();
@@ -4366,20 +4567,34 @@
             });
         }
 
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.rule-custom-select')) closeAllRuleSelects();
-        });
+        function initTheme() {
+            const savedTheme = localStorage.getItem('merch_theme');
+            const themeToggle = document.getElementById('themeToggle');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark');
+                if (themeToggle) themeToggle.textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark');
+                if (themeToggle) themeToggle.textContent = '🌙';
+            }
+        }
 
-        window.onclick = function(event) {
-            if (event.target === document.getElementById('historyModal')) closeHistory();
-            if (event.target === document.getElementById('cartModal')) closeCartModal();
-            if (event.target === document.getElementById('rulesModal')) closeRulesModal();
-            if (event.target === document.getElementById('statsModal')) closeStatsModal();
-            if (event.target === document.getElementById('editProductModal')) closeEditProductModal();
+        function toggleTheme() {
+            const themeToggle = document.getElementById('themeToggle');
+            if (document.body.classList.contains('dark')) {
+                document.body.classList.remove('dark');
+                localStorage.setItem('merch_theme', 'light');
+                if (themeToggle) themeToggle.textContent = '🌙';
+            } else {
+                document.body.classList.add('dark');
+                localStorage.setItem('merch_theme', 'dark');
+                if (themeToggle) themeToggle.textContent = '☀️';
+            }
         }
 
         function bindDateTimeEvents() {
-            const selectIds = ['dateFromDay', 'dateFromMonth', 'dateFromYear', 'timeFromHour', 'timeFromMinute',
+            const selectIds = [
+                'dateFromDay', 'dateFromMonth', 'dateFromYear', 'timeFromHour', 'timeFromMinute',
                 'dateToDay', 'dateToMonth', 'dateToYear', 'timeToHour', 'timeToMinute'
             ];
             for (const id of selectIds) {
@@ -4410,12 +4625,13 @@
             document.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('active'));
             filterAndSort();
         }
-
+        // ========== АУТЕНТИФИКАЦИЯ ==========
         function checkPasswordAndLogin() {
             const passwordInput = document.getElementById('passwordInput');
             const errorMsg = document.getElementById('errorMsg');
             const loginOverlay = document.getElementById('loginOverlay');
             const mainContent = document.getElementById('mainContent');
+
             if (passwordInput.value === CORRECT_PASSWORD) {
                 localStorage.setItem('merch_authenticated', 'true');
                 loginOverlay.style.display = 'none';
@@ -4439,6 +4655,7 @@
         function checkExistingAuth() {
             const loginOverlay = document.getElementById('loginOverlay');
             const mainContent = document.getElementById('mainContent');
+
             if (localStorage.getItem('merch_authenticated') === 'true') {
                 loginOverlay.style.display = 'none';
                 mainContent.style.display = 'block';
@@ -4458,24 +4675,52 @@
             }
         }
 
+        // ========== ОБРАБОТЧИКИ СОБЫТИЙ ==========
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.rule-custom-select')) {
+                closeAllRuleSelects();
+            }
+        });
+
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('historyModal')) closeHistory();
+            if (event.target === document.getElementById('cartModal')) closeCartModal();
+            if (event.target === document.getElementById('rulesModal')) closeRulesModal();
+            if (event.target === document.getElementById('statsModal')) closeStatsModal();
+            if (event.target === document.getElementById('editProductModal')) closeEditProductModal();
+        };
+
+        // ========== ЗАПУСК ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ==========
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
+
             const themeToggle = document.getElementById('themeToggle');
             if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+
             const loginBtn = document.getElementById('loginBtn');
             if (loginBtn) loginBtn.addEventListener('click', checkPasswordAndLogin);
+
             const passwordInput = document.getElementById('passwordInput');
-            if (passwordInput) passwordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') checkPasswordAndLogin();
-            });
+            if (passwordInput) {
+                passwordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') checkPasswordAndLogin();
+                });
+            }
+
             const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', () => filterAndSort());
+            }
+
             const resetBtn = document.getElementById('resetFilters');
-            if (searchInput) searchInput.addEventListener('input', () => filterAndSort());
             if (resetBtn) resetBtn.addEventListener('click', resetAllFilters);
+
             const rulesBtn = document.getElementById('rulesButton');
             if (rulesBtn) rulesBtn.addEventListener('click', openRulesModal);
+
             const statsBtn = document.getElementById('statsButton');
             if (statsBtn) statsBtn.addEventListener('click', openStatsModal);
+
             checkExistingAuth();
         });
     </script>
