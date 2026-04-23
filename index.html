@@ -1334,9 +1334,6 @@
             color: var(--text-primary);
             border: none;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .cart-qty-btn:disabled {
@@ -1361,9 +1358,6 @@
             width: 36px;
             height: 36px;
             box-shadow: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .cart-total {
@@ -1395,13 +1389,13 @@
 
         .cart-clear {
             flex: 1;
-            background: #e74c3c;
-            color: white;
+            background: rgba(231, 76, 60, 0.2);
+            color: var(--reset-color);
             width: auto;
             padding: 12px;
             font-size: 14px;
             border-radius: 30px;
-            border: none;
+            border: 1px solid rgba(231, 76, 60, 0.3);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1686,7 +1680,7 @@
             border-radius: 16px;
             margin-bottom: 16px;
             overflow: hidden;
-            border: 1px solid var(--btn-bg);
+            border-left: 4px solid var(--btn-bg);
         }
 
         .discount-header {
@@ -1694,7 +1688,8 @@
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            padding: 6px 12px;
+            padding: 8px 12px;
+            background: var(--badge-bg);
         }
 
         .discount-title {
@@ -1710,7 +1705,8 @@
         }
 
         .discount-content {
-            padding: 0 12px 8px 12px;
+            padding: 0 12px 12px 12px;
+            background: var(--badge-bg);
         }
 
         .discount-group {
@@ -1837,7 +1833,7 @@
         }
 
         .discount-action-btn:hover {
-            background: var(--badge-bg);
+            background: rgba(243, 156, 18, 0.1);
         }
 
         .discount-action-btn.cancel-btn {
@@ -1871,7 +1867,7 @@
         }
 
         .discount-products-btn:hover {
-            background: var(--badge-bg);
+            background: rgba(243, 156, 18, 0.1);
         }
 
         .discount-all-btn {
@@ -1891,7 +1887,7 @@
         }
 
         .discount-all-btn:hover {
-            background: var(--badge-bg);
+            background: rgba(243, 156, 18, 0.1);
         }
 
         .discount-none-btn {
@@ -1911,7 +1907,7 @@
         }
 
         .discount-none-btn:hover {
-            background: var(--badge-bg);
+            background: rgba(243, 156, 18, 0.1);
         }
 
         .product-select-list {
@@ -2020,34 +2016,6 @@
             font-size: 11px;
         }
 
-        @media (min-width: 1024px) {
-            .title-row {
-                margin-bottom: 2px;
-            }
-            .name {
-                font-size: 24px;
-            }
-            .stock {
-                font-size: 22px;
-            }
-            .card {
-                padding: 12px;
-            }
-        }
-
-        @media (min-width: 768px) and (max-width: 1024px) {
-            body {
-                padding-bottom: 85px;
-            }
-            .footer {
-                padding: 12px 20px;
-                font-size: 13px;
-            }
-            .footer a {
-                padding: 6px 8px;
-            }
-        }
-
         @media (max-width: 500px) {
             button {
                 width: 48px;
@@ -2104,48 +2072,6 @@
                 width: 32px;
                 height: 32px;
                 font-size: 18px;
-            }
-            .history-filter-btn {
-                padding: 0 12px;
-                font-size: 12px;
-                height: 34px;
-            }
-            .history-filter-btn-small {
-                min-width: 55px;
-            }
-            .history-filter-btn-large {
-                min-width: 90px;
-            }
-            .history-price-filter input {
-                width: 65px;
-            }
-            .history-price-filter {
-                padding: 2px 10px;
-                gap: 5px;
-                height: 32px;
-            }
-            .history-filter-reset {
-                padding: 0 20px;
-                height: 32px;
-                font-size: 12px;
-            }
-            .custom-datetime {
-                padding: 2px 8px;
-                height: 32px;
-                gap: 4px;
-            }
-            .datetime-select {
-                padding: 2px 3px;
-                font-size: 9px;
-            }
-            .history-filter-left {
-                flex-direction: column;
-                align-items: flex-start;
-                width: 100%;
-            }
-            .history-price-filter {
-                width: 100%;
-                justify-content: center;
             }
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -2628,7 +2554,6 @@
             discountProductListVisible = false;
             const container = document.getElementById('productDiscountList');
             if (container) container.style.display = 'none';
-            closeDiscountPanel();
             updateCartUI();
             showToast("Скидка применена к выбранным товарам", true);
         }
@@ -3670,7 +3595,6 @@
         function getBestDiscountForItem(idx, originalPrice, qty, subtotal) {
             let finalPrice = originalPrice;
             let discountPercent = 0;
-
             if (itemDiscounts[idx]) {
                 const disc = itemDiscounts[idx];
                 if (disc.type === 'percent') {
@@ -3682,7 +3606,6 @@
                     discountPercent = ((originalPrice - finalPrice) / originalPrice) * 100;
                 }
             }
-
             return { price: finalPrice, discountPercent: Math.round(discountPercent) };
         }
 
@@ -3716,7 +3639,7 @@
                         <span class="discount-title">🎯 Скидки</span>
                         <span class="discount-chevron" id="discount-chevron">▼</span>
                     </div>
-                    <div id="discount-content" class="discount-content" style="display: none;">
+                    <div id="discount-content" class="discount-content" style="display: ${discountPanelOpen ? 'block' : 'none'};">
                         <div class="discount-group">
                             <div class="discount-row">
                                 <div class="discount-custom-select">
@@ -3942,10 +3865,6 @@
             if (modal) {
                 modal.style.display = 'block';
                 discountPanelOpen = false;
-                const content = document.getElementById('discount-content');
-                const chevron = document.getElementById('discount-chevron');
-                if (content) content.style.display = 'none';
-                if (chevron) chevron.textContent = '▼';
             }
             updateCartUI();
         }
@@ -4167,16 +4086,13 @@
                     revenueMap.set(item.name, currentRevenue + (item.qty * item.price));
                 }
             }
-            
             return [...data].sort((a, b) => {
                 const revenueA = revenueMap.get(a.name) || 0;
                 const revenueB = revenueMap.get(b.name) || 0;
                 const isOutOfStockA = (a.stock || 0) === 0;
                 const isOutOfStockB = (b.stock || 0) === 0;
-                
                 if (isOutOfStockA && !isOutOfStockB) return 1;
                 if (!isOutOfStockA && isOutOfStockB) return -1;
-                
                 return revenueB - revenueA;
             });
         }
