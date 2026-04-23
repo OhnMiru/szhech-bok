@@ -1680,8 +1680,8 @@
             margin-bottom: 16px;
             border-radius: 16px;
             position: relative;
-            border-left: none;
         }
+
         .discount-section::before {
             content: ' ';
             position: absolute;
@@ -1690,8 +1690,10 @@
             bottom: 0;
             width: 3px;
             background: var(--btn-bg);
-            border-left-radius: 16px;
+            border-top-left-radius: 16px;
+            border-bottom-left-radius: 16px;
         }
+
         .discount-header {
             display: flex;
             justify-content: space-between;
@@ -1699,6 +1701,7 @@
             cursor: pointer;
             padding: 8px 12px;
             background: var(--badge-bg);
+            border-top-left-radius: 16px;
             border-top-right-radius: 16px;
         }
 
@@ -1717,6 +1720,7 @@
         .discount-content {
             padding: 0 12px 12px 12px;
             background: var(--badge-bg);
+            border-bottom-left-radius: 16px;
             border-bottom-right-radius: 16px;
         }
 
