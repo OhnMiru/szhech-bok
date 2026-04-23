@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>🍌 PATI — учёт мерча</title>
+    <title>🍌 Банановый учёт мерча</title>
     <style>
         /* ВСЕ ТВОИ СТИЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ */
         * {
@@ -2189,7 +2189,7 @@
             <span>Автообновление каждую минуту</span>
         </div>
         <div class="footer">
-            PATI | <a id="sheetLink" href="#" target="_blank">Синхронизация с таблицей</a>
+            Намяукано | <a id="sheetLink" href="#" target="_blank">Синхронизация с таблицей</a>
         </div>
     </div>
 
@@ -2250,7 +2250,7 @@
                     document.getElementById('loginOverlay').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
                     
-                    const roleIcon = CURRENT_USER.role === 'organizer' ? '📊' : '🎨';
+                    const roleIcon = CURRENT_USER.role === 'organizer' ? '📊' : '🍌';
                     document.getElementById('shopTitle').innerHTML = `${roleIcon} ${CURRENT_USER.name} — учёт мерча`;
                     
                     const sheetLink = document.getElementById('sheetLink');
