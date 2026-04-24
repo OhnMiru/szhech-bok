@@ -47,7 +47,6 @@
             --profit-negative: #e74c3c;
             --extra-costs-text-light: #5a3a1a;
             --extra-costs-text-dark: #ffffff;
-            --settings-bg: #f39c12;
         }
 
         body.dark {
@@ -87,7 +86,6 @@
             --profit-negative: #e74c3c;
             --extra-costs-text-light: #f5e6c4;
             --extra-costs-text-dark: #ffffff;
-            --settings-bg: #e67e22;
         }
 
         body {
@@ -808,12 +806,12 @@
             flex: 1;
         }
 
-        .history-delete-btn {
+        .history-delete-btn,
+        .history-cancel-btn {
             background: none;
             border: none;
             font-size: 18px;
             cursor: pointer;
-            color: var(--minus-color);
             width: 36px;
             height: 36px;
             box-shadow: none;
@@ -824,8 +822,22 @@
             transition: background 0.2s;
         }
 
-        .history-delete-btn:hover {
+        .history-delete-btn {
+            color: var(--minus-color);
+        }
+
+        .history-cancel-btn {
+            color: var(--stock-color);
+        }
+
+        .history-delete-btn:hover,
+        .history-cancel-btn:hover {
             background: var(--badge-bg);
+        }
+
+        .history-buttons {
+            display: flex;
+            gap: 4px;
         }
 
         .history-date {
@@ -1129,7 +1141,7 @@
             color: var(--text-muted);
             font-size: 13px;
         }
-        
+
         .password-wrapper {
             position: relative;
             width: 100%;
@@ -1743,7 +1755,7 @@
             border-radius: 16px;
             border-left: 3px solid var(--btn-bg);
         }
-        
+
         .discount-header {
             display: flex;
             justify-content: space-between;
@@ -2313,24 +2325,22 @@
         <span class="cart-badge" id="cartCount">0</span>
     </button>
 
+    <!-- ЭКРАН ВХОДА -->
     <div id="loginOverlay" style="position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:2000; display:flex; align-items:center; justify-content:center;">
         <div class="login-card">
             <h2>🍌 Ясгу фд</h2>
             <p style="color:var(--text-muted); font-size:13px; margin-bottom:20px;">Заходите на пати</p>
-            
             <input type="text" id="loginInput" style="width:100%; padding:12px; font-size:16px; border:1px solid var(--border-color); border-radius:30px; outline:none; margin-bottom:12px; text-align:center; background:var(--card-bg); color:var(--text-primary);" placeholder="Логин" autofocus>
-            
             <div class="password-wrapper">
                 <input type="password" id="passwordInput" placeholder="Пароль">
                 <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">👁️</button>
             </div>
-            
             <button id="loginBtn" style="background:var(--btn-bg); color:white; border:none; border-radius:30px; padding:12px 24px; font-size:16px; font-weight:500; width:100%; cursor:pointer;">🍌 Войти 🍌</button>
-            
             <div id="errorMsg" style="color:var(--minus-color); font-size:12px; margin-top:12px; display:none;"></div>
         </div>
     </div>
 
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <div id="mainContent" style="display:none;">
         <div class="header-row">
             <div class="title-area">
@@ -2555,10 +2565,9 @@
             </div>
         </div>
     </div>
-    
     <script>
         // ========== НАСТРОЙКА ==========
-        const CENTRAL_API_URL = "https://script.google.com/macros/s/AKfycbzTCE5eDCWmfA7Ww1PWn3PTS6T7eR3FD99Mwh3zZhRN5OD45GMvtpccyeuI8RbsNdY/exec";
+        const CENTRAL_API_URL = "https://script.google.com/macros/s/AKfycbxJar6cHZlIu0gQM8xO35PUsan-vuvXTTpJ59iEabh45bQhMq_kN1zaQSmmNaaUXart/exec";
         
         let CURRENT_USER = {
             id: null,
@@ -2569,23 +2578,106 @@
             hideStats: false
         };
         
+        let pendingOperations = [];
+        let isOnline = navigator.onLine;
+        
         function buildApiUrl(action, extraParams = "") {
             if (!CURRENT_USER.id) return "#";
             return `${CENTRAL_API_URL}?action=${action}&participant=${CURRENT_USER.id}${extraParams}&t=${Date.now()}`;
         }
         
+        // ========== ОФЛАЙН-СИНХРОНИЗАЦИЯ ==========
+        function savePendingOperations() {
+            localStorage.setItem('merch_pending_ops', JSON.stringify(pendingOperations));
+        }
+        
+        function loadPendingOperations() {
+            const saved = localStorage.getItem('merch_pending_ops');
+            if (saved) {
+                try {
+                    pendingOperations = JSON.parse(saved);
+                } catch(e) { pendingOperations = []; }
+            } else {
+                pendingOperations = [];
+            }
+        }
+        
+        async function processPendingOperations() {
+            if (!isOnline) return;
+            if (pendingOperations.length === 0) return;
+            
+            showToast(`Синхронизация (${pendingOperations.length} операций)...`, true);
+            
+            const failed = [];
+            for (const op of pendingOperations) {
+                try {
+                    let url = buildApiUrl(op.action, op.params);
+                    const response = await fetch(url);
+                    const result = await response.json();
+                    if (!result.success) {
+                        failed.push(op);
+                    }
+                } catch(e) {
+                    failed.push(op);
+                }
+            }
+            
+            if (failed.length === 0) {
+                pendingOperations = [];
+                showToast("Все операции синхронизированы", true);
+            } else {
+                pendingOperations = failed;
+                showToast(`Не синхронизировано: ${failed.length} операций`, false);
+            }
+            savePendingOperations();
+        }
+        
+        function addPendingOperation(action, params) {
+            pendingOperations.push({ action: action, params: params, timestamp: Date.now() });
+            savePendingOperations();
+            if (isOnline) {
+                processPendingOperations();
+            }
+        }
+        
+        window.addEventListener('online', () => {
+            isOnline = true;
+            showToast("Соединение восстановлено, синхронизация...", true);
+            processPendingOperations();
+            loadData(false, false);
+        });
+        
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            showToast("Нет соединения с интернетом. Изменения сохранятся локально.", false);
+        });
+        
         // ========== НАСТРОЙКИ КОНФИДЕНЦИАЛЬНОСТИ ==========
         async function savePrivacySettings() {
+            if (!isOnline) {
+                addPendingOperation("savePrivacy", `&data=${encodeURIComponent(JSON.stringify({ shareStats: CURRENT_USER.shareStats, hideStats: CURRENT_USER.hideStats }))}`);
+                return;
+            }
             try {
                 const data = encodeURIComponent(JSON.stringify({
                     shareStats: CURRENT_USER.shareStats,
                     hideStats: CURRENT_USER.hideStats
                 }));
                 await fetch(buildApiUrl("savePrivacy", `&data=${data}`));
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error(e); addPendingOperation("savePrivacy", `&data=${encodeURIComponent(JSON.stringify({ shareStats: CURRENT_USER.shareStats, hideStats: CURRENT_USER.hideStats }))}`); }
         }
         
         async function loadPrivacySettings() {
+            if (!isOnline) {
+                const saved = localStorage.getItem('merch_privacy');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    CURRENT_USER.shareStats = parsed.shareStats === true;
+                    CURRENT_USER.hideStats = parsed.hideStats === true;
+                    updatePrivacyButtonsUI();
+                }
+                return;
+            }
             try {
                 const response = await fetch(buildApiUrl("getPrivacy"));
                 const data = await response.json();
@@ -2693,6 +2785,7 @@
                     }));
                     
                     await loadPrivacySettings();
+                    loadPendingOperations();
                     
                     document.getElementById('loginOverlay').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
@@ -2711,6 +2804,7 @@
                     }
                     
                     initApp();
+                    processPendingOperations();
                 } else {
                     errorMsg.style.display = 'block';
                     errorMsg.textContent = result.error || 'Неверный логин или пароль';
@@ -2749,7 +2843,11 @@
                         if (globalStatsBtn) globalStatsBtn.style.display = 'inline-flex';
                     }
                     
-                    loadPrivacySettings().then(() => initApp());
+                    loadPrivacySettings().then(() => {
+                        loadPendingOperations();
+                        initApp();
+                        processPendingOperations();
+                    });
                     return true;
                 } catch(e) {}
             }
@@ -2830,13 +2928,24 @@
             card.total = newTotal;
             card.stock = newStock;
             filterAndSort();
+            
+            if (!isOnline) {
+                addPendingOperation("updateTotal", `&row=${currentEditIndex}&newTotal=${newTotal}&newStock=${newStock}`);
+                showToast(`Товар "${card.name}" обновлён (будет синхронизировано при восстановлении соединения)`, true);
+                closeEditProductModal();
+                return;
+            }
+            
             try {
                 await fetch(buildApiUrl("updateTotal", `&row=${currentEditIndex}&newTotal=${newTotal}&newStock=${newStock}`));
-            } catch (e) { console.error(e); }
+                showToast(`Товар "${card.name}" обновлён`, true);
+            } catch (e) {
+                console.error(e);
+                addPendingOperation("updateTotal", `&row=${currentEditIndex}&newTotal=${newTotal}&newStock=${newStock}`);
+                showToast(`Товар "${card.name}" обновлён (будет синхронизировано при восстановлении соединения)`, true);
+            }
             closeEditProductModal();
-            showToast(`Товар "${card.name}" обновлён`, true);
         }
-        
         // ========== СКИДКИ ==========
         function toggleDiscountPanel() {
             discountPanelOpen = !discountPanelOpen;
@@ -2979,17 +3088,25 @@
             showToast("Скидки на товары сброшены", true);
         }
         
-        // ========== ДОПОЛНИТЕЛЬНЫЕ РАСХОДЫ ==========
+        // ========== ДОПОЛНИТЕЛЬНЫЕ РАСХОДЫ (ЛОКАЛЬНЫЕ) ==========
         let extraCosts = [];
         
         async function syncExtraCostsToServer() {
+            if (!isOnline) {
+                addPendingOperation("syncExtraCosts", `&data=${encodeURIComponent(JSON.stringify(extraCosts))}`);
+                return;
+            }
             try {
                 const data = encodeURIComponent(JSON.stringify(extraCosts));
                 await fetch(buildApiUrl("syncExtraCosts", `&data=${data}`));
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error(e); addPendingOperation("syncExtraCosts", `&data=${encodeURIComponent(JSON.stringify(extraCosts))}`); }
         }
         
         async function loadExtraCostsFromServer() {
+            if (!isOnline) {
+                loadExtraCostsFromLocal();
+                return false;
+            }
             try {
                 const response = await fetch(buildApiUrl("getExtraCosts"));
                 const data = await response.json();
@@ -3034,6 +3151,82 @@
             if (document.getElementById('statsModal')?.style.display === 'block') renderStats();
         }
         
+        // ========== ГЛОБАЛЬНЫЕ РАСХОДЫ ДЛЯ ОРГАНИЗАТОРА ==========
+        let globalExtraCosts = [];
+        
+        async function loadGlobalExtraCosts() {
+            if (!isOnline) {
+                const saved = localStorage.getItem('merch_global_costs');
+                if (saved) globalExtraCosts = JSON.parse(saved);
+                else globalExtraCosts = [];
+                return;
+            }
+            try {
+                const response = await fetch(buildApiUrl("getAllExtraCosts"));
+                const data = await response.json();
+                if (data && data.costs) {
+                    globalExtraCosts = data.costs;
+                    localStorage.setItem('merch_global_costs', JSON.stringify(globalExtraCosts));
+                }
+            } catch(e) {
+                const saved = localStorage.getItem('merch_global_costs');
+                if (saved) globalExtraCosts = JSON.parse(saved);
+                else globalExtraCosts = [];
+            }
+        }
+        
+        async function addGlobalExtraCost(name, amount) {
+            if (!isOnline) {
+                const newId = Date.now();
+                globalExtraCosts.push({ id: newId, name: name, amount: amount });
+                localStorage.setItem('merch_global_costs', JSON.stringify(globalExtraCosts));
+                addPendingOperation("addExtraCostGlobal", `&name=${encodeURIComponent(name)}&amount=${amount}`);
+                showToast("Расход добавлен (будет синхронизирован позже)", true);
+                if (document.getElementById('globalStatsModal')?.style.display === 'block') renderGlobalStatsWithCosts();
+                return;
+            }
+            try {
+                const response = await fetch(buildApiUrl("addExtraCostGlobal", `&name=${encodeURIComponent(name)}&amount=${amount}`));
+                const result = await response.json();
+                if (result.success) {
+                    await loadGlobalExtraCosts();
+                    showToast("Расход добавлен", true);
+                    if (document.getElementById('globalStatsModal')?.style.display === 'block') renderGlobalStatsWithCosts();
+                }
+            } catch(e) {
+                globalExtraCosts.push({ id: Date.now(), name: name, amount: amount });
+                localStorage.setItem('merch_global_costs', JSON.stringify(globalExtraCosts));
+                addPendingOperation("addExtraCostGlobal", `&name=${encodeURIComponent(name)}&amount=${amount}`);
+                showToast("Расход добавлен (будет синхронизирован позже)", true);
+            }
+        }
+        
+        async function deleteGlobalExtraCost(index) {
+            const costId = globalExtraCosts[index].id;
+            if (!isOnline) {
+                globalExtraCosts.splice(index, 1);
+                localStorage.setItem('merch_global_costs', JSON.stringify(globalExtraCosts));
+                addPendingOperation("deleteExtraCostGlobal", `&index=${index}&id=${costId}`);
+                showToast("Расход удалён (будет синхронизирован позже)", true);
+                if (document.getElementById('globalStatsModal')?.style.display === 'block') renderGlobalStatsWithCosts();
+                return;
+            }
+            try {
+                const response = await fetch(buildApiUrl("deleteExtraCostGlobal", `&index=${index}`));
+                const result = await response.json();
+                if (result.success) {
+                    await loadGlobalExtraCosts();
+                    showToast("Расход удалён", true);
+                    if (document.getElementById('globalStatsModal')?.style.display === 'block') renderGlobalStatsWithCosts();
+                }
+            } catch(e) {
+                globalExtraCosts.splice(index, 1);
+                localStorage.setItem('merch_global_costs', JSON.stringify(globalExtraCosts));
+                addPendingOperation("deleteExtraCostGlobal", `&index=${index}&id=${costId}`);
+                showToast("Расход удалён (будет синхронизирован позже)", true);
+            }
+        }
+        
         // ========== ИСТОРИЯ ==========
         let salesHistory = [];
         let historyMethodFilter = "all";
@@ -3050,13 +3243,21 @@
         }
         
         async function syncFullHistoryToServer() {
+            if (!isOnline) {
+                addPendingOperation("syncFullHistory", `&data=${encodeURIComponent(JSON.stringify(salesHistory))}`);
+                return;
+            }
             try {
                 const data = encodeURIComponent(JSON.stringify(salesHistory));
                 await fetch(buildApiUrl("syncFullHistory", `&data=${data}`));
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error(e); addPendingOperation("syncFullHistory", `&data=${encodeURIComponent(JSON.stringify(salesHistory))}`); }
         }
         
         async function loadHistoryFromServer() {
+            if (!isOnline) {
+                loadHistoryFromLocal();
+                return false;
+            }
             try {
                 const response = await fetch(buildApiUrl("getFullHistory"));
                 const data = await response.json();
@@ -3087,7 +3288,8 @@
                 items: items.map(item => ({ name: item.name, qty: item.qty, price: item.price })),
                 total: total,
                 method: method,
-                isReturn: isReturn
+                isReturn: isReturn,
+                hidden: false
             };
             salesHistory.unshift(entry);
             if (salesHistory.length > 200) salesHistory = salesHistory.slice(0, 200);
@@ -3097,6 +3299,64 @@
         
         function addSingleSaleToHistory(name, qty, price, isReturn = false) {
             addToHistory([{ name: name, qty: qty, price: price }], qty * price, 'single', isReturn);
+        }
+        
+        async function hideHistoryEntry(id) {
+            if (!isOnline) {
+                const entry = salesHistory.find(e => e.id == id);
+                if (entry) entry.hidden = true;
+                saveHistory();
+                addPendingOperation("hideHistoryEntry", `&id=${id}`);
+                renderHistoryList();
+                showToast("Запись скрыта (будет синхронизировано позже)", true);
+                return;
+            }
+            try {
+                await fetch(buildApiUrl("hideHistoryEntry", `&id=${id}`));
+                const entry = salesHistory.find(e => e.id == id);
+                if (entry) entry.hidden = true;
+                saveHistory();
+                renderHistoryList();
+                showToast("Запись скрыта", true);
+            } catch(e) {
+                const entry = salesHistory.find(e => e.id == id);
+                if (entry) entry.hidden = true;
+                saveHistory();
+                addPendingOperation("hideHistoryEntry", `&id=${id}`);
+                showToast("Запись скрыта (будет синхронизировано позже)", true);
+            }
+        }
+        
+        async function cancelHistoryEntry(id) {
+            const entry = salesHistory.find(e => e.id == id);
+            if (!entry) return;
+            if (entry.isReturn) {
+                showToast("Отмена возврата не поддерживается", false);
+                return;
+            }
+            
+            if (!isOnline) {
+                addPendingOperation("cancelHistoryEntry", `&id=${id}`);
+                showToast("Отмена продажи будет выполнена при восстановлении соединения", true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(buildApiUrl("cancelHistoryEntry", `&id=${id}`));
+                const result = await response.json();
+                if (result.success) {
+                    entry.hidden = true;
+                    saveHistory();
+                    await loadData(true, false);
+                    renderHistoryList();
+                    showToast("Продажа отменена, остатки восстановлены", true);
+                } else {
+                    showToast("Ошибка отмены: " + (result.error || "неизвестная"), false);
+                }
+            } catch(e) {
+                addPendingOperation("cancelHistoryEntry", `&id=${id}`);
+                showToast("Отмена продажи будет выполнена при восстановлении соединения", true);
+            }
         }
         
         function setHistoryMethodFilter(filter) {
@@ -3122,13 +3382,6 @@
             historySyncInterval = setInterval(async () => { await loadHistoryFromServer(); }, 60000);
         }
         
-        function deleteHistoryEntry(id) {
-            salesHistory = salesHistory.filter(entry => entry.id != id);
-            saveHistory();
-            renderHistoryList();
-            showToast("Запись удалена", true);
-        }
-        
         function clearAllHistory() {
             if (salesHistory.length === 0) {
                 showToast("История уже пуста", false);
@@ -3141,7 +3394,6 @@
                 showToast("Вся история очищена", true);
             }
         }
-        
         // ========== ПРАВИЛА ==========
         let rulesList = [];
         let currentRuleType = "type";
@@ -3149,13 +3401,24 @@
         let scrollPosition = 0;
         
         async function syncFullRulesToServer() {
+            if (!isOnline) {
+                addPendingOperation("syncFullRules", `&data=${encodeURIComponent(JSON.stringify(rulesList))}`);
+                return;
+            }
             try {
                 const data = encodeURIComponent(JSON.stringify(rulesList));
                 await fetch(buildApiUrl("syncFullRules", `&data=${data}`));
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error(e); addPendingOperation("syncFullRules", `&data=${encodeURIComponent(JSON.stringify(rulesList))}`); }
         }
         
         async function loadRulesFromServer() {
+            if (!isOnline) {
+                const saved = localStorage.getItem('merch_rules_structured');
+                if (saved) rulesList = JSON.parse(saved);
+                else rulesList = [];
+                renderRulesList();
+                return false;
+            }
             try {
                 const response = await fetch(buildApiUrl("getRules"));
                 const data = await response.json();
@@ -3554,7 +3817,7 @@
             const minPrice = parseInt(document.getElementById('historyMinPrice')?.value) || 0;
             const maxPrice = parseInt(document.getElementById('historyMaxPrice')?.value) || Infinity;
             
-            let filtered = [...salesHistory];
+            let filtered = salesHistory.filter(e => !e.hidden);
             if (historyMethodFilter === 'basket') filtered = filtered.filter(e => e.method === 'basket');
             else if (historyMethodFilter === 'single') filtered = filtered.filter(e => e.method === 'single');
             if (historyTypeFilter === 'sale') filtered = filtered.filter(e => !e.isReturn);
@@ -3588,7 +3851,10 @@
                                 <div class="history-details">${itemsHtml}</div>
                                 <div class="${isReturn ? 'history-return' : 'history-sale'}">${isReturn ? '↩️' : '💰'} Итого: ${entry.total} ₽</div>
                             </div>
-                            <button class="history-delete-btn" onclick="deleteHistoryEntry('${entry.id}')" title="Удалить запись">🗑</button>
+                            <div class="history-buttons">
+                                ${!isReturn ? `<button class="history-cancel-btn" onclick="cancelHistoryEntry('${entry.id}')" title="Отменить продажу">↩️</button>` : ''}
+                                <button class="history-delete-btn" onclick="hideHistoryEntry('${entry.id}')" title="Скрыть запись">🗑</button>
+                            </div>
                         </div>`;
             }
             container.innerHTML = html;
@@ -3665,7 +3931,7 @@
         
         function sortByRevenue(data) {
             const revenueMap = new Map();
-            const sales = salesHistory.filter(entry => !entry.isReturn);
+            const sales = salesHistory.filter(entry => !entry.isReturn && !entry.hidden);
             for (const sale of sales) {
                 for (const item of sale.items) {
                     const currentRevenue = revenueMap.get(item.name) || 0;
@@ -3701,13 +3967,21 @@
         }
         
         async function syncCustomOrderToServer() {
+            if (!isOnline) {
+                addPendingOperation("syncCustomOrder", `&data=${encodeURIComponent(JSON.stringify(customOrder))}`);
+                return;
+            }
             try {
                 const data = encodeURIComponent(JSON.stringify(customOrder));
                 await fetch(buildApiUrl("syncCustomOrder", `&data=${data}`));
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error(e); addPendingOperation("syncCustomOrder", `&data=${encodeURIComponent(JSON.stringify(customOrder))}`); }
         }
         
         async function loadCustomOrderFromServer() {
+            if (!isOnline) {
+                loadCustomOrder();
+                return false;
+            }
             try {
                 const response = await fetch(buildApiUrl("getCustomOrder"));
                 const data = await response.json();
@@ -3739,7 +4013,7 @@
             return ordered;
         }
         
-        // ========== DRAG & DROP (только для мыши) ==========
+        // ========== DRAG & DROP ==========
         function dragStartHandler(e, index) {
             if (currentSortBy !== 'custom') return;
             dragStartIndex = index;
@@ -4197,7 +4471,13 @@
                 for (const [idxStr, qty] of Object.entries(cartCopy)) {
                     if (qty === 0) continue;
                     const idx = parseInt(idxStr);
-                    for (let i = 0; i < qty; i++) { try { await fetch(buildApiUrl("update", `&row=${idx}&delta=-1`)); } catch(e) { console.error(e); } }
+                    for (let i = 0; i < qty; i++) {
+                        if (!isOnline) {
+                            addPendingOperation("update", `&row=${idx}&delta=-1`);
+                        } else {
+                            try { await fetch(buildApiUrl("update", `&row=${idx}&delta=-1`)); } catch(e) { addPendingOperation("update", `&row=${idx}&delta=-1`); }
+                        }
+                    }
                 }
                 showUpdateTime();
             })();
@@ -4219,11 +4499,26 @@
             if (newStock < 0) { if (!silent) showToast("Остаток не может быть меньше 0", false); return; }
             card.stock = newStock;
             filterAndSort();
+            
+            if (!isOnline) {
+                addPendingOperation("update", `&row=${index}&delta=${delta}`);
+                updateCardBadges();
+                if (!silent) {
+                    if (delta === -1) { addSingleSaleToHistory(card.name, 1, card.price, false); showToast(`Продажа: ${card.name} -1 шт (будет синхронизировано)`, true); }
+                    else if (delta === 1) { addSingleSaleToHistory(card.name, 1, card.price, true); showToast(`Возврат: ${card.name} +1 шт (будет синхронизировано)`, true); }
+                }
+                return;
+            }
+            
             try {
                 const response = await fetch(buildApiUrl("update", `&row=${index}&delta=${delta}`));
                 const result = await response.json();
                 if (!result.success && !silent) { await loadData(true, true); showToast("Ошибка: " + (result.error || "неизвестная"), false); }
-            } catch (error) { console.error(error); if (!silent) { await loadData(true, true); showToast("Ошибка соединения", false); } }
+            } catch (error) {
+                console.error(error);
+                addPendingOperation("update", `&row=${index}&delta=${delta}`);
+                if (!silent) showToast(`Операция сохранена для синхронизации`, true);
+            }
             updateCardBadges();
             if (!silent) {
                 if (delta === -1) { addSingleSaleToHistory(card.name, 1, card.price, false); showToast(`Продажа: ${card.name} -1 шт`, true); }
@@ -4272,7 +4567,13 @@
                 for (const [idxStr, qty] of Object.entries(cartCopy)) {
                     if (qty === 0) continue;
                     const idx = parseInt(idxStr);
-                    for (let i = 0; i < qty; i++) { try { await fetch(buildApiUrl("update", `&row=${idx}&delta=-1`)); } catch(e) { console.error(e); } }
+                    for (let i = 0; i < qty; i++) {
+                        if (!isOnline) {
+                            addPendingOperation("update", `&row=${idx}&delta=-1`);
+                        } else {
+                            try { await fetch(buildApiUrl("update", `&row=${idx}&delta=-1`)); } catch(e) { addPendingOperation("update", `&row=${idx}&delta=-1`); }
+                        }
+                    }
                 }
                 showUpdateTime();
             })();
@@ -4290,7 +4591,7 @@
         function renderStats() {
             const container = document.getElementById('stats-content');
             if (!container) return;
-            const sales = salesHistory.filter(entry => !entry.isReturn);
+            const sales = salesHistory.filter(entry => !entry.isReturn && !entry.hidden);
             let totalRevenue = 0, totalItemsSold = 0, orderCount = sales.length;
             for (const sale of sales) { let saleItems = 0; for (const item of sale.items) { totalRevenue += item.qty * item.price; saleItems += item.qty; } totalItemsSold += saleItems; }
             const averageCheck = orderCount > 0 ? totalRevenue / orderCount : 0;
@@ -4367,49 +4668,56 @@
             const container = document.getElementById('globalStats-content');
             container.innerHTML = '<div class="loading">Загрузка статистики всех участников...</div>';
             try {
+                await loadGlobalExtraCosts();
                 const response = await fetch(`${CENTRAL_API_URL}?action=getAllStatsFull&participant=${CURRENT_USER.id}&t=${Date.now()}`);
                 const data = await response.json();
-                
-                let html = `<div class="participant-custom-select" id="participantSelectContainer">
-                        <div class="participant-custom-select-trigger" id="participantSelectTrigger">📊 Все участники</div>
-                        <div class="participant-custom-select-dropdown" id="participantSelectDropdown">
-                            <div class="participant-option selected" data-id="all">📊 Все участники</div>`;
-                for (const p of (data.participants || [])) {
-                    if (p.hideStats !== true || CURRENT_USER.role === 'organizer') {
-                        html += `<div class="participant-option" data-id="${escapeHtml(p.id)}">${escapeHtml(p.name)} (${p.role === 'organizer' ? 'Организатор' : 'Художник'})</div>`;
-                    }
-                }
-                html += `</div></div><div id="participantStatsContainer"></div>`;
-                container.innerHTML = html;
-                
-                renderFullGlobalStats(data);
-                
-                const trigger = document.getElementById('participantSelectTrigger');
-                const dropdown = document.getElementById('participantSelectDropdown');
-                if (trigger && dropdown) {
-                    trigger.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); });
-                    document.querySelectorAll('.participant-option').forEach(opt => {
-                        opt.addEventListener('click', async (e) => {
-                            const id = opt.dataset.id;
-                            document.querySelectorAll('.participant-option').forEach(o => o.classList.remove('selected'));
-                            opt.classList.add('selected');
-                            const selectedName = opt.textContent.replace('📊 ', '');
-                            trigger.textContent = selectedName.length > 30 ? selectedName.substring(0, 27) + '...' : selectedName;
-                            dropdown.classList.remove('show');
-                            if (id === 'all') {
-                                renderFullGlobalStats(data);
-                            } else {
-                                const userStats = await fetch(`${CENTRAL_API_URL}?action=getUserFullStats&participant=${CURRENT_USER.id}&targetUser=${encodeURIComponent(id)}&t=${Date.now()}`).then(r => r.json());
-                                renderSingleParticipantFullStats(userStats);
-                            }
-                        });
-                    });
-                    document.addEventListener('click', (e) => { if (!trigger.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('show'); });
-                }
+                renderGlobalStatsWithData(data);
             } catch(e) { container.innerHTML = '<div class="loading">Ошибка загрузки статистики</div>'; showToast("Ошибка загрузки статистики", false); }
         }
         
-        function renderFullGlobalStats(data) {
+        function renderGlobalStatsWithData(data) {
+            const container = document.getElementById('globalStats-content');
+            if (!container) return;
+            
+            let html = `<div class="participant-custom-select" id="participantSelectContainer">
+                    <div class="participant-custom-select-trigger" id="participantSelectTrigger">📊 Все участники</div>
+                    <div class="participant-custom-select-dropdown" id="participantSelectDropdown">
+                        <div class="participant-option selected" data-id="all">📊 Все участники</div>`;
+            for (const p of (data.participants || [])) {
+                if (p.hideStats !== true || CURRENT_USER.role === 'organizer') {
+                    html += `<div class="participant-option" data-id="${escapeHtml(p.id)}">${escapeHtml(p.name)} (${p.role === 'organizer' ? 'Организатор' : 'Художник'})</div>`;
+                }
+            }
+            html += `</div></div><div id="participantStatsContainer"></div>`;
+            container.innerHTML = html;
+            
+            renderGlobalStatsContent(data);
+            
+            const trigger = document.getElementById('participantSelectTrigger');
+            const dropdown = document.getElementById('participantSelectDropdown');
+            if (trigger && dropdown) {
+                trigger.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); });
+                document.querySelectorAll('.participant-option').forEach(opt => {
+                    opt.addEventListener('click', async (e) => {
+                        const id = opt.dataset.id;
+                        document.querySelectorAll('.participant-option').forEach(o => o.classList.remove('selected'));
+                        opt.classList.add('selected');
+                        const selectedName = opt.textContent.replace('📊 ', '');
+                        trigger.textContent = selectedName.length > 30 ? selectedName.substring(0, 27) + '...' : selectedName;
+                        dropdown.classList.remove('show');
+                        if (id === 'all') {
+                            renderGlobalStatsContent(data);
+                        } else {
+                            const userStats = await fetch(`${CENTRAL_API_URL}?action=getUserFullStats&participant=${CURRENT_USER.id}&targetUser=${encodeURIComponent(id)}&t=${Date.now()}`).then(r => r.json());
+                            renderSingleParticipantStats(userStats);
+                        }
+                    });
+                });
+                document.addEventListener('click', (e) => { if (!trigger.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('show'); });
+            }
+        }
+        
+        function renderGlobalStatsContent(data) {
             const container = document.getElementById('participantStatsContainer');
             if (!container) return;
             const stats = data.stats || [];
@@ -4442,6 +4750,7 @@
                         <td class="text-right ${marginClass}">${(s.profitMargin || 0).toFixed(1)}%</td></tr>`;
             }
             html += `</tbody></table></div>`;
+            
             if (data.typeDetails && data.typeDetails.length > 0) {
                 html += `<div class="detail-section"><div class="detail-title">🏷️ Рентабельность по типам мерча</div><table class="detail-table"><thead><tr><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>`;
                 for (const t of data.typeDetails) {
@@ -4455,6 +4764,7 @@
                 }
                 html += `</tbody></table></div>`;
             }
+            
             if (data.topProducts && data.topProducts.length > 0) {
                 html += `<div class="detail-section"><div class="detail-title">🏆 Популярные позиции</div><table class="detail-table"><thead><tr><th>#</th><th>Товар</th><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>`;
                 for (let i = 0; i < data.topProducts.length; i++) {
@@ -4471,6 +4781,7 @@
                 }
                 html += `</tbody></tr></div>`;
             }
+            
             if (data.topTypes && data.topTypes.length > 0) {
                 html += `<div class="detail-section"><div class="detail-title">🏆 Популярные типы мерча</div><table class="detail-table"><thead><tr><th>#</th><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>`;
                 for (let i = 0; i < data.topTypes.length; i++) {
@@ -4486,38 +4797,79 @@
                 }
                 html += `</tbody></table></div>`;
             }
+            
+            // Глобальные расходы для организатора
+            if (CURRENT_USER.role === 'organizer') {
+                html += `<div class="extra-costs-section"><div class="detail-title">➕ Общие расходы организатора</div><div id="global-extra-costs-list">`;
+                if (globalExtraCosts.length === 0) html += '<div style="color: var(--text-muted); text-align: center; padding: 12px;">Нет дополнительных расходов</div>';
+                for (let i = 0; i < globalExtraCosts.length; i++) {
+                    const cost = globalExtraCosts[i];
+                    html += `<div class="extra-cost-item"><span class="extra-cost-name">${escapeHtml(cost.name)}</span><span class="extra-cost-amount">${cost.amount} ₽</span><button class="extra-cost-delete" onclick="deleteGlobalExtraCost(${i})">🗑</button></div>`;
+                }
+                html += `</div><div class="add-cost-form"><input type="text" id="newGlobalCostName" class="add-cost-input" placeholder="Название (аренда, доставка...)" autocomplete="off"><input type="number" id="newGlobalCostAmount" class="add-cost-input-number" placeholder="Сумма" value="0" step="100"><button class="add-cost-btn" onclick="addGlobalExtraCostFromModal()">➕ Добавить</button></div></div>`;
+            }
+            
             container.innerHTML = html;
         }
         
-        function renderSingleParticipantFullStats(data) {
+        async function renderGlobalStatsWithCosts() {
             const container = document.getElementById('participantStatsContainer');
             if (!container) return;
-            const profitClass = (data.netProfit || 0) >= 0 ? 'profit-positive' : 'profit-negative';
-            const marginClass = (data.profitMargin || 0) >= 0 ? 'profit-positive' : 'profit-negative';
-            let html = `<div class="stats-grid"><div class="stats-card"><div class="stats-card-value">${(data.totalRevenue || 0).toLocaleString()} ₽</div><div class="stats-card-label">💰 Выручка</div></div>
-                    <div class="stats-card"><div class="stats-card-value">${(data.totalCost || 0).toLocaleString()} ₽</div><div class="stats-card-label">📦 Себестоимость</div></div>
-                    <div class="stats-card"><div class="stats-card-value ${profitClass}">${(data.netProfit || 0).toLocaleString()} ₽</div><div class="stats-card-label">📈 Чистая прибыль</div></div>
-                    <div class="stats-card"><div class="stats-card-value">${(data.totalItemsSold || 0).toLocaleString()} шт</div><div class="stats-card-label">📊 Продано единиц</div></div>
-                    <div class="stats-card"><div class="stats-card-value">${(data.totalGoods || 0).toLocaleString()} шт</div><div class="stats-card-label">📦 Всего товаров</div></div>
-                    <div class="stats-card"><div class="stats-card-value">${(data.averageCheck || 0).toLocaleString()} ₽</div><div class="stats-card-label">💳 Средний чек</div></div></div>
-                <div class="stats-summary-compact"><div class="stats-summary-value ${marginClass}">${(data.profitMargin || 0).toFixed(1)}%</div><div class="stats-summary-label">Рентабельность продаж</div></div>`;
-            if (data.productDetails && data.productDetails.length > 0) {
+            await loadGlobalExtraCosts();
+            const existingData = window._globalStatsData;
+            if (existingData) {
+                renderGlobalStatsContent(existingData);
+            }
+        }
+        
+        async function addGlobalExtraCostFromModal() {
+            const nameInput = document.getElementById('newGlobalCostName');
+            const amountInput = document.getElementById('newGlobalCostAmount');
+            const name = nameInput?.value.trim();
+            const amount = parseFloat(amountInput?.value);
+            if (!name || isNaN(amount) || amount <= 0) {
+                showToast("Введите название и сумму расхода", false);
+                return;
+            }
+            await addGlobalExtraCost(name, amount);
+            if (nameInput) nameInput.value = '';
+            if (amountInput) amountInput.value = '0';
+            if (document.getElementById('globalStatsModal')?.style.display === 'block') {
+                const response = await fetch(`${CENTRAL_API_URL}?action=getAllStatsFull&participant=${CURRENT_USER.id}&t=${Date.now()}`);
+                const data = await response.json();
+                renderGlobalStatsContent(data);
+            }
+        }
+        
+        function renderSingleParticipantStats(stats) {
+            const container = document.getElementById('participantStatsContainer');
+            if (!container) return;
+            const profitClass = (stats.netProfit || 0) >= 0 ? 'profit-positive' : 'profit-negative';
+            const marginClass = (stats.profitMargin || 0) >= 0 ? 'profit-positive' : 'profit-negative';
+            let html = `<div class="stats-grid"><div class="stats-card"><div class="stats-card-value">${(stats.totalRevenue || 0).toLocaleString()} ₽</div><div class="stats-card-label">💰 Выручка</div></div>
+                    <div class="stats-card"><div class="stats-card-value">${(stats.totalCost || 0).toLocaleString()} ₽</div><div class="stats-card-label">📦 Себестоимость</div></div>
+                    <div class="stats-card"><div class="stats-card-value ${profitClass}">${(stats.netProfit || 0).toLocaleString()} ₽</div><div class="stats-card-label">📈 Чистая прибыль</div></div>
+                    <div class="stats-card"><div class="stats-card-value">${(stats.totalItemsSold || 0).toLocaleString()} шт</div><div class="stats-card-label">📊 Продано единиц</div></div>
+                    <div class="stats-card"><div class="stats-card-value">${(stats.totalGoods || 0).toLocaleString()} шт</div><div class="stats-card-label">📦 Всего товаров</div></div>
+                    <div class="stats-card"><div class="stats-card-value">${(stats.averageCheck || 0).toLocaleString()} ₽</div><div class="stats-card-label">💳 Средний чек</div></div></div>
+                <div class="stats-summary-compact"><div class="stats-summary-value ${marginClass}">${(stats.profitMargin || 0).toFixed(1)}%</div><div class="stats-summary-label">Рентабельность продаж</div></div>`;
+            if (stats.productDetails && stats.productDetails.length > 0) {
                 html += `<div class="detail-section"><div class="detail-title">📦 Детализация по товарам</div><table class="detail-table"><thead><tr><th>Товар</th><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>`;
-                for (const p of data.productDetails) {
+                for (const p of stats.productDetails) {
                     const pProfitClass = (p.profit || 0) >= 0 ? 'profit-positive' : 'profit-negative';
                     const pMarginClass = (p.margin || 0) >= 0 ? 'profit-positive' : 'profit-negative';
-                    html += `<tr><td>${escapeHtml(p.name)}</td><td><span class="type-badge" style="background:${getTypeColor(p.type)}20; color:${getTypeColor(p.type)};">${escapeHtml(p.type)}</span></td><td class="text-right">${p.qty} шт</td><td class="text-right">${p.revenue.toLocaleString()} ₽</td><td class="text-right ${pProfitClass}">${p.profit.toLocaleString()} ₽</td><td class="text-right ${pMarginClass}">${p.margin.toFixed(1)}%</td></tr>`;
+                    html += `<tr><td>${escapeHtml(p.name)}</td>}<span class="type-badge" style="background:${getTypeColor(p.type)}20; color:${getTypeColor(p.type)};">${escapeHtml(p.type)}</span></td><td class="text-right">${p.qty} шт</td><td class="text-right">${p.revenue.toLocaleString()} ₽</td><td class="text-right ${pProfitClass}">${p.profit.toLocaleString()} ₽</td><td class="text-right ${pMarginClass}">${p.margin.toFixed(1)}%</td></tr>`;
                 }
                 html += `</tbody></table></div>`;
             }
-            if (data.typeDetails && data.typeDetails.length > 0) {
+            if (stats.typeDetails && stats.typeDetails.length > 0) {
                 html += `<div class="detail-section"><div class="detail-title">🏷️ Детализация по типам мерча</div><table class="detail-table"><thead><tr><th>Тип</th><th class="text-right">Кол-во</th><th class="text-right">Выручка</th><th class="text-right">Прибыль</th><th class="text-right">Рентаб.</th></tr></thead><tbody>`;
-                for (const t of data.typeDetails) {
+                for (const t of stats.typeDetails) {
                     const tProfitClass = (t.profit || 0) >= 0 ? 'profit-positive' : 'profit-negative';
                     const tMarginClass = (t.margin || 0) >= 0 ? 'profit-positive' : 'profit-negative';
-                    html += `<tr><td><span class="type-badge" style="background:${getTypeColor(t.type)}20; color:${getTypeColor(t.type)};">${escapeHtml(t.type)}</span></td><td class="text-right">${t.qty} шт</td><td class="text-right">${t.revenue.toLocaleString()} ₽</td><td class="text-right ${tProfitClass}">${t.profit.toLocaleString()} ₽</td><td class="text-right ${tMarginClass}">${t.margin.toFixed(1)}%</td></tr>`;
+                    html += `<tr>}<span class="type-badge" style="background:${getTypeColor(t.type)}20; color:${getTypeColor(t.type)};">${escapeHtml(t.type)}</span></td><td class="text-right">${t.qty} шт</td><td class="text-right">${t.revenue.toLocaleString()} ₽</td><td class="text-right ${tProfitClass}">${t.profit.toLocaleString()} ₽</td><td class="text-right ${tMarginClass}">${t.margin.toFixed(1)}%</td></tr>`;
                 }
-                html += `</tbody></table></div>`;
+                html += `</tbody></td></div>`;
             }
             container.innerHTML = html;
         }
@@ -4613,6 +4965,7 @@
             loadRules();
             loadHistory();
             loadExtraCosts();
+            if (CURRENT_USER.role === 'organizer') loadGlobalExtraCosts();
             initDateTimeSelects();
             bindDateTimeEvents();
             initCustomOrder();
